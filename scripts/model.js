@@ -1,5 +1,9 @@
 export const ID = "bg3-combat-bar";
-export const SECTIONS = { features: 12, spells: 12, items: 8 };
+export const PAGE_COUNT = 10;
+export const SECTION_COLUMNS = 12;
+export const MAX_ROWS = 6;
+export const SECTIONS = { features: 72, spells: 72, items: 72 };
+export const DEFAULT_WIDTHS = {features:262,spells:262,items:174};
 export const GENERICS = {
   dash: { name: "Dash", description: "Gain additional movement equal to your current speed for this turn.", cost: "action" },
   disengage: { name: "Disengage", description: "Your movement does not provoke Opportunity Attacks for the rest of this turn.", cost: "action" },
@@ -11,23 +15,45 @@ export const clone = value => structuredClone(value);
 export const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 export function newPage() { return Object.fromEntries(Object.entries(SECTIONS).map(([key, n]) => [key, Array(n).fill(null)])); }
 export function defaultLayout() {
-  return { version: 1, locked: false, page: 0, pages: [newPage()], order: ["weapons",...Object.keys(SECTIONS)], widths: {...SECTIONS},
+  return { version: 2, locked: false, page: 0, pages: Array.from({length:PAGE_COUNT},newPage), rows:2,
+    order: ["weapons",...Object.keys(SECTIONS)], widths: {...DEFAULT_WIDTHS},
     weapons: { melee: [[null,null],[null,null]], ranged: [[null,null],[null,null]] },
     weaponTab: "melee", weaponSet: {melee:0,ranged:0}, activeLoadout: null, resources: [], offset: {x:0,y:0} };
 }
 export function normalizeLayout(saved) {
   const base = defaultLayout();
-  if (!saved || saved.version !== 1) return base;
-  const result = {...base, ...clone(saved)};
-  result.pages = (Array.isArray(saved.pages) && saved.pages.length ? saved.pages.slice(0,12) : [newPage()]).map(p =>
-    Object.fromEntries(Object.entries(SECTIONS).map(([key,n]) => [key, Array.from({length:n}, (_,i) => typeof p?.[key]?.[i] === "string" ? p[key][i] : null)])));
-  result.page = Math.max(0, Math.min(result.pages.length-1, Math.trunc(Number(saved.page) || 0)));
-  result.widths = Object.fromEntries(Object.entries(SECTIONS).map(([key,max])=>[key,Math.max(4,Math.min(max,2*Math.round((Number(saved.widths?.[key])||max)/2)))]));
-  result.order = [...new Set([...(saved.order ?? []).filter(k => k === "weapons" || k in SECTIONS), "weapons", ...Object.keys(SECTIONS)])];
-  for (const type of ["melee","ranged"]) {
-    result.weapons[type] = Array.from({length:2}, (_,i) => Array.from({length:2}, (_,j) => saved.weapons?.[type]?.[i]?.[j] ?? null));
-  }
+  if (!saved || ![1,2].includes(saved.version)) return base;
+  const legacy=saved.version===1,result={...base,...clone(saved),version:2};
+  const migratePage=p=>Object.fromEntries(Object.entries(SECTIONS).map(([key,n])=>{
+    const slots=Array(n).fill(null),oldColumns=key==='items'?4:6;
+    for(const [i,id] of (p?.[key]??[]).entries()){
+      const index=legacy?Math.floor(i/oldColumns)*SECTION_COLUMNS+i%oldColumns:i;
+      if(index<n&&typeof id==='string')slots[index]=id;
+    }
+    return [key,slots];
+  }));
+  result.pages=Array.from({length:PAGE_COUNT},(_,i)=>migratePage(saved.pages?.[i]));
+  // Keep any pages beyond the new ten-page limit in flags rather than discarding assignments.
+  if(saved.pages?.length>PAGE_COUNT)result.archivedPages=[...(saved.archivedPages??[]),...saved.pages.slice(PAGE_COUNT).map(migratePage)];
+  result.page=Math.max(0,Math.min(PAGE_COUNT-1,Math.trunc(Number(saved.page)||0)));
+  result.rows=Math.max(2,Math.min(MAX_ROWS,Math.trunc(Number(saved.rows)||2)));
+  result.widths=Object.fromEntries(Object.keys(SECTIONS).map(key=>{
+    const old=Number(saved.widths?.[key]);
+    const width=old>0?(legacy?old/2*44-2:old):DEFAULT_WIDTHS[key];
+    return [key,Math.max(42,Math.min(SECTION_COLUMNS*44-2,width))];
+  }));
+  result.order=[...new Set([...(saved.order??[]).filter(k=>k==='weapons'||k in SECTIONS),'weapons',...Object.keys(SECTIONS)])];
+  result.weapons={};
+  for(const type of ['melee','ranged'])result.weapons[type]=Array.from({length:2},(_,i)=>Array.from({length:2},(_,j)=>saved.weapons?.[type]?.[i]?.[j]??null));
   return result;
+}
+export function resizeSections(widths,order,key,delta) {
+  const next={...widths},neighbor=order.slice(order.indexOf(key)+1).find(k=>k in widths);
+  const minimum=42,maximum=SECTION_COLUMNS*44-2;
+  let change=Math.max(minimum-widths[key],Math.min(maximum-widths[key],delta));
+  if(neighbor)change=Math.max(widths[neighbor]-maximum,Math.min(widths[neighbor]-minimum,change));
+  next[key]+=change;if(neighbor)next[neighbor]-=change;
+  return next;
 }
 export function matchesItem(item, section, hand=0) {
   if (!item) return false;

@@ -10,19 +10,19 @@ In Foundry's **Install Module** dialog, paste this manifest URL:
 https://github.com/webmaster94/bg3-combat-bar/releases/latest/download/module.json
 ```
 
-Extract `bg3-combat-bar-0.1.1.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
+Extract `bg3-combat-bar-0.1.2.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
 
 The bar appears during combat for the selected owned PC or NPC. If nothing is selected, it follows the owned current combatant or the user's assigned character. The client setting **Show outside combat** also allows preparing a bar before combat.
 
 ## Controls
 
 - Click an empty slot to choose from the actor's matching items. Drop a sheet item onto any matching slot to assign it. Items belonging to another actor are rejected.
-- Click an assigned slot to use its item through D&D's activity workflow. Right-click, Alt-click, or click the small upper-right arrow to open the same picker and replace or clear it.
+- Click an assigned slot to use its item through D&D's activity workflow. Right-click an assigned slot to replace or clear it. Alt-click has no separate slot-assignment behavior.
 - The weapon tabs select melee or ranged loadouts. Each has two numbered loadouts with a main-hand and off-hand slot. Assigning a weapon or selecting a numbered loadout equips that loadout and unequips weapons managed by the other loadouts. Off-hand slots also accept shields.
-- Drag assigned icons to exchange slots. Drag a section's heading to reorder the weapon, feature, spell, and item sections. Drag the colored right border of a feature, spell, or item section to resize it, with a live preview. Widths snap to columns and save on release. Escape cancels a resize. The focused border also accepts Left/Right arrows and Home/End. Drag the diamond above the portrait to move the whole bar.
-- The page controls add, remove, and switch between up to 12 pages. Weapons and custom resources are shared across those pages. Locking prevents layout changes while allowing item use and weapon switching.
-- The grid button above the page arrows switches to Foundry's macro bar. **Shift+B** also switches bars. A return button remains above the macro bar.
-- Click the small die beside the portrait for skills, saving throws, ending Hide, and escaping a grapple. Click the portrait to open the character sheet.
+- Drag assigned icons to exchange slots. Drag section headings to reorder features, spells, and items within their shared frame. Drag the colored right border of a feature, spell, or item section to adjust its visible width smoothly. The neighboring section gives or receives the same space. Slots retain their positions; narrowing the window clips them, including partial slots, without scrolling or wrapping. Widen the section to reveal them again. Escape cancels a resize. The focused border also accepts Left/Right arrows and Home/End. Drag the diamond above the portrait to move the whole bar.
+- The page controls switch between ten pages. The adjacent **Rows + / −** controls reveal between two and six rows, starting at two. Reducing rows hides their assignments until expanded again. Weapons and resources are shared across pages. Locking prevents layout changes while allowing item use, page changes, and weapon switching.
+- The grid button beside the lock, below the page and row controls, switches to Foundry's macro bar. **Shift+B** also switches bars. A return button remains above the macro bar.
+- Click the die outside the left edge of the portrait for skills, saving throws, ending Hide, and escaping a grapple. Click the portrait to open the character sheet.
 - Click an action or bonus-action resource to mark it spent. Right-click to restore it, for corrections or additional actions granted by another feature.
 - Click **+** in the resource strip and choose **Feature**, **Spell**, **Item**, or **Custom Counter**. The first three open a picker for entries on the character with their own limited uses. You can also drag an entry with limited uses onto the resource strip. Spells that only use spell slots are already tracked by the slot diamonds. Custom counters can recover on a turn, short rest, or long rest. Item-backed resources use the item's own consumption and recovery rules.
 - End turn is enabled only on this token's turn. Rest opens the system's short- or long-rest workflow.

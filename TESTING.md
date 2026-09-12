@@ -1,4 +1,12 @@
-# Verification — 0.1.0
+# Verification
+
+## 0.1.2 fixed grids and shared frame
+
+Eleven automated tests pass. New coverage checks migration from the original row/column layout to ten pages, fractional divider widths, conservation of adjacent section space, and preservation of assignments hidden by width or row limits.
+
+Local browser checks verified a 20-pixel divider drag produced fractional viewport widths without changing the twelve-column grid; slot viewports use overflow clipping with no scrolling. The row controls reveal a third row and return to two, and page navigation wraps from 1 to 10 and back. Width and row settings survived reload. Native DialogV2 resource choice, item picker, custom-counter saving/removal, and skills/saves windows were exercised.
+
+The final frame joins feature/spell/item slots, resources, and page/row controls. Portrait, weapon loadouts, end turn, and rest remain separate. Alt-click assignment and the redundant slot arrow were removed. Visual checks covered the external skills button, internal dividers, control alignment, and resource crown.
 
 ## 0.1.1 interface fixes
 

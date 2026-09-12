@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="150" viewBox="0 0 240 150">
+  <defs>
+    <linearGradient id="gold" x2="0" y2="1"><stop stop-color="#e3c88a"/><stop offset=".35" stop-color="#806035"/><stop offset=".7" stop-color="#b59554"/><stop offset="1" stop-color="#dbc187"/></linearGradient>
+    <linearGradient id="panel" x2="0" y2="1"><stop stop-color="#272a25"/><stop offset=".2" stop-color="#101718"/><stop offset="1" stop-color="#171a18"/></linearGradient>
+  </defs>
+  <path d="M1 1 16 6H224L239 1 234 17V133L239 149 224 144H16L1 149 6 133V17Z" fill="#090d0e" stroke="#322619" stroke-width="2"/>
+  <path d="M4 4 18 9H222L236 4 231 19V131L236 146 222 141H18L4 146 9 131V19Z" fill="url(#panel)" stroke="url(#gold)" stroke-width="2"/>
+  <path d="M19 12H221L228 20V130L221 138H19L12 130V20Z" fill="none" stroke="#715735"/>
+  <path d="m5 5 9 3-2 10m223-13-9 3 2 10M5 145l9-3-2-10m223 13-9-3 2-10" fill="none" stroke="#eddbaa" stroke-width="1.2"/>
+  <path d="m10 9 6 5-5 8m219-13-6 5 5 8M10 141l6-5-5-8m219 13-6-5 5-8" fill="none" stroke="#a08248"/>
+  <path d="m16 8 7 4-7 4-4-4Zm208 0 7 4-7 4-4-4ZM16 134l7 4-7 4-4-4Zm208 0 7 4-7 4-4-4Z" fill="#1c211d" stroke="#b99a58"/>
+</svg>

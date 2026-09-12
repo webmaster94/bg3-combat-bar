@@ -1,28 +1,28 @@
 import {escapeHTML as esc} from "./model.js";
+
 export function choose(title, content, buttons, {width=440}={}) {
-  return new Promise(resolve => {
-    const dialog=document.createElement("dialog"); dialog.className="bg3-dialog"; dialog.style.width=`${width}px`;
-    dialog.innerHTML=`<header><h2>${esc(title)}</h2><button type="button" data-cancel aria-label="Close">×</button></header><form><div class="bg3-dialog-body">${content}</div><footer>${buttons.map(b=>`<button type="submit" value="${esc(b.value)}">${esc(b.label)}</button>`).join("")}</footer></form>`;
-    let settled=false;
-    const finish=result=> {if(settled)return;settled=true;dialog.close();dialog.remove();resolve(result);};
-    dialog.querySelector("form").onsubmit=e=> {e.preventDefault();finish({button:e.submitter?.value,data:new FormData(e.currentTarget)});};
-    dialog.querySelector("[data-cancel]").onclick=()=>finish(null);
-    dialog.addEventListener("cancel",e=>{e.preventDefault();finish(null);});
-    document.body.append(dialog);dialog.showModal();
+  return foundry.applications.api.DialogV2.wait({
+    window:{title},position:{width},classes:['bg3-app'],modal:true,rejectClose:false,
+    content,
+    buttons:buttons.map(b=>({action:b.value,label:b.label,callback:(_event,button)=>({button:b.value,data:new FormData(button.form)})}))
   });
 }
 export async function confirm(title,content,label="Continue") { return !!await choose(title,content,[{value:"yes",label}]); }
-export async function pickItem(ctx, section, predicate, {allowClear=true,emptyText='No matching items on this character.'}={}) {
+export function showPanel(title,content,render,{width=550}={}) {
+  return foundry.applications.api.DialogV2.wait({window:{title},position:{width},classes:['bg3-app'],content,modal:true,rejectClose:false,buttons:[{action:'close',label:'Close'}],render:(_event,app)=>render(app)});
+}
+export async function pickItem(ctx, title, predicate, {allowClear=true,emptyText='No matching items on this character.'}={}) {
   const items=ctx.actor.items.filter(predicate).sort((a,b)=>a.name.localeCompare(b.name));
-  const dialog=document.createElement("dialog");dialog.className="bg3-dialog bg3-picker";
-  dialog.innerHTML=`<header><h2>${esc(section)}</h2><button data-close aria-label="Close">×</button></header><input type="search" placeholder="Search this character…" aria-label="Search items"><div class="bg3-item-list">${items.map(i=>`<button data-id="${i.id}"><img src="${esc(i.img)}" alt=""><span>${esc(i.name)}</span><small>${esc(i.type==='feat'?'Feature':i.type[0].toUpperCase()+i.type.slice(1))}</small></button>`).join("") || `<p>${esc(emptyText)}</p>`}</div>${allowClear?'<footer><button data-clear>Clear slot</button></footer>':''}`;
-  return new Promise(resolve=>{
-    const done=value=>{dialog.close();dialog.remove();resolve(value);};
-    dialog.querySelector("[data-close]").onclick=()=>done(undefined);
-    if(allowClear)dialog.querySelector("[data-clear]").onclick=()=>done(null);
-    dialog.oncancel=e=>{e.preventDefault();done(undefined);};
-    dialog.querySelector("input").oninput=e=>dialog.querySelectorAll("[data-id]").forEach(b=>b.hidden=!b.textContent.toLowerCase().includes(e.target.value.toLowerCase()));
-    dialog.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>done(b.dataset.id));
-    document.body.append(dialog);dialog.showModal();
+  let selected;
+  await foundry.applications.api.DialogV2.wait({
+    window:{title},position:{width:460},classes:['bg3-app','bg3-picker'],modal:true,rejectClose:false,
+    content:`<input type="search" placeholder="Search this character…" aria-label="Search items"><div class="bg3-item-list">${items.map(i=>`<button type="button" data-item-id="${i.id}"><img src="${esc(i.img)}" alt=""><span>${esc(i.name)}</span><small>${esc(i.type==='feat'?'Feature':i.type[0].toUpperCase()+i.type.slice(1))}</small></button>`).join('')||`<p>${esc(emptyText)}</p>`}</div>`,
+    buttons:[...(allowClear?[{action:'clear',label:'Clear slot',callback:()=>{selected=null;}}]:[]),{action:'cancel',label:'Cancel'}],
+    render:(_event,app)=>{
+      const root=app.element;
+      root.querySelector('input').oninput=e=>root.querySelectorAll('[data-item-id]').forEach(b=>b.hidden=!b.textContent.toLowerCase().includes(e.target.value.toLowerCase()));
+      root.querySelectorAll('[data-item-id]').forEach(b=>b.onclick=()=>{selected=b.dataset.itemId;app.close();});
+    }
   });
+  return selected;
 }

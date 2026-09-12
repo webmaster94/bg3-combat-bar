@@ -1,6 +1,6 @@
-import {ID,SECTIONS,GENERICS,escapeHTML as esc,newPage,matchesItem,usesBadge} from "./model.js";
+import {ID,SECTIONS,SECTION_COLUMNS,MAX_ROWS,PAGE_COUNT,resizeSections,GENERICS,escapeHTML as esc,matchesItem,usesBadge} from "./model.js";
 import {layout,editLayout,economy,actionCost,isTurn,equipLoadout,serial} from "./state.js";
-import {choose,pickItem,confirm} from "./dialogs.js";
+import {choose,pickItem,showPanel} from "./dialogs.js";
 import {generic,requestGM,clearHidden} from "./actions.js";
 
 const icon = (name,cls="") => `<img class="bg3-generic-icon ${cls}" src="modules/${ID}/assets/${name}.svg" alt="">`;
@@ -18,13 +18,12 @@ export class CombatBar {
     const ctx=this.ctx,data=layout(ctx),actor=ctx.actor,hp=actor.system.attributes.hp,frac=Math.max(0,Math.min(1,(hp.value??0)/(hp.max||1)));
     const root=this.root=document.createElement("section");root.id="bg3-combat-bar";root.setAttribute("aria-label",`BG3 Combat Bar: ${actor.name}`);
     root.classList.toggle("is-locked",data.locked);root.style.setProperty("--bg3-scale",game.settings.get(ID,"scale"));
-    root.style.setProperty("--offset-x",`${data.offset.x}px`);root.style.setProperty("--offset-y",`${data.offset.y}px`);
-    root.innerHTML=`<div class="bg3-upper"><div class="bg3-identity"><button class="bg3-drag-bar" data-command="move" aria-label="Drag combat bar" title="Drag the bar when unlocked">◆</button><span class="bg3-actor-name">${esc(actor.name)}</span></div><div class="bg3-resources" data-resource-drop>${this.resources(ctx,data)}</div></div>
-      <div class="bg3-main"><div class="bg3-portrait-wrap"><button class="bg3-portrait" data-command="sheet" title="Open character sheet" style="--hp:${frac*100}%;--damage:${(1-frac)*100}%"><img src="${esc(actor.img)}" alt="${esc(actor.name)}"><span class="bg3-health-fill"></span><span class="bg3-health">${hp.value??0}<small> / ${hp.max??0}</small></span>${hp.temp>0?`<span class="bg3-temp">+${hp.temp}</span>`:""}</button><button class="bg3-checks" data-command="checks" aria-label="Skills and saving throws" title="Skills and saving throws">${icon("d20")}</button></div>
-      <div class="bg3-sections">${data.order.map(section=>section==="weapons"?this.weapons(ctx,data):this.section(ctx,data,section)).join("")}</div>
-      <nav class="bg3-controls" aria-label="Bar controls"><button data-command="macros" title="Show Foundry macro bar" aria-label="Show Foundry macro bar">▦</button><button data-command="previous" aria-label="Previous page" title="Previous page">▴</button><span>${data.page+1}/${data.pages.length}</span><button data-command="next" aria-label="Next page" title="Next page">▾</button><button data-command="addPage" aria-label="Add page" title="Add page">+</button><button data-command="deletePage" aria-label="Remove current page" title="Remove current page">−</button><button data-command="lock" aria-label="${data.locked?"Unlock":"Lock"} bar" title="${data.locked?"Unlock":"Lock"} bar"><i class="fa-solid ${data.locked?"fa-lock":"fa-unlock"}"></i></button></nav>
+    root.style.setProperty("--rows",data.rows);root.style.setProperty("--offset-x",`${data.offset.x}px`);root.style.setProperty("--offset-y",`${data.offset.y}px`);
+    root.innerHTML=`<div class="bg3-main"><div class="bg3-portrait-wrap"><div class="bg3-identity"><button class="bg3-drag-bar" data-command="move" aria-label="Drag combat bar" title="Drag the bar when unlocked">◆</button><span class="bg3-actor-name">${esc(actor.name)}</span></div><button class="bg3-portrait" data-command="sheet" title="Open character sheet" style="--hp:${frac*100}%;--damage:${(1-frac)*100}%"><img src="${esc(actor.img)}" alt="${esc(actor.name)}"><span class="bg3-health-fill"></span><span class="bg3-health">${hp.value??0}<small> / ${hp.max??0}</small></span>${hp.temp>0?`<span class="bg3-temp">+${hp.temp}</span>`:""}</button><button class="bg3-checks" data-command="checks" aria-label="Skills and saving throws" title="Skills and saving throws">${icon("d20")}</button></div>
+      ${this.weapons(ctx,data)}<div class="bg3-action-frame"><div class="bg3-resource-crown"><div class="bg3-resources" data-resource-drop>${this.resources(ctx,data)}</div></div><div class="bg3-sections">${data.order.filter(section=>section!=="weapons").map(section=>this.section(ctx,data,section)).join("")}</div>
+      <nav class="bg3-controls" aria-label="Bar controls"><div class="bg3-control-column"><small>Page</small><button data-command="previous" aria-label="Previous page" title="Previous page">▴</button><span>${data.page+1}/${PAGE_COUNT}</span><button data-command="next" aria-label="Next page" title="Next page">▾</button></div><div class="bg3-control-column"><small>Rows</small><button data-command="moreRows" aria-label="Add row" title="Add row" ${data.rows>=MAX_ROWS||data.locked?'disabled':''}>+</button><span>${data.rows}</span><button data-command="fewerRows" aria-label="Remove row" title="Remove row" ${data.rows<=2||data.locked?'disabled':''}>−</button></div><div class="bg3-control-bottom"><button data-command="lock" aria-label="${data.locked?"Unlock":"Lock"} bar" title="${data.locked?"Unlock":"Lock"} bar"><i class="fa-solid ${data.locked?"fa-lock":"fa-unlock"}"></i></button><button data-command="macros" title="Show Foundry macro bar" aria-label="Show Foundry macro bar">▦</button></div></nav></div>
       <button class="bg3-end-turn ${isTurn(ctx)?"is-turn":""}" data-command="endTurn" ${isTurn(ctx)?"":"disabled"} aria-label="End turn">${icon("hourglass")}<small>End turn</small></button><button class="bg3-rest" data-command="rest" title="Short or long rest" aria-label="Rest">${icon("rest")}</button></div>`;
-    document.body.append(root);this.bind(ctx,data);
+    document.body.append(root);root.style.setProperty("--bg3-scale",Math.min(game.settings.get(ID,"scale"),(innerWidth-130)/root.offsetWidth));this.bind(ctx,data);
   }
   resources(ctx,data){
     const e=economy(ctx),spells=ctx.actor.system.spells??{};
@@ -43,16 +42,16 @@ export class CombatBar {
   }
   weapons(ctx,data){
     const type=data.weaponTab,index=data.weaponSet[type];
-    return `<section class="bg3-section bg3-weapons" data-section="weapons"><header draggable="${!data.locked}" data-section-drag="weapons"><span>Weapons</span></header><div class="bg3-weapon-tabs"><button data-weapon-type="melee" class="${type==='melee'?'active':''}" title="Melee loadouts">${icon('swords')}</button><button data-weapon-type="ranged" class="${type==='ranged'?'active':''}" title="Ranged loadouts">${icon('bow')}</button></div><div class="bg3-weapon-slots">${data.weapons[type][index].map((id,hand)=>this.slot(ctx,id,{section:type,index:hand,loadout:index,weapon:true,hand})).join('')}</div><div class="bg3-loadouts">${[0,1].map(i=>`<button data-loadout="${i}" class="${index===i?'active':''}" title="Equip ${type} loadout ${i+1}">${i+1===1?'I':'II'}</button>`).join('')}<small>${data.activeLoadout?.type===type&&data.activeLoadout?.index===index?'Equipped':'Stored'}</small></div></section>`;
+    return `<section class="bg3-section bg3-weapons" data-section="weapons"><header><span>Weapons</span></header><div class="bg3-weapon-tabs"><button data-weapon-type="melee" class="${type==='melee'?'active':''}" title="Melee loadouts">${icon('swords')}</button><button data-weapon-type="ranged" class="${type==='ranged'?'active':''}" title="Ranged loadouts">${icon('bow')}</button></div><div class="bg3-weapon-slots">${data.weapons[type][index].map((id,hand)=>this.slot(ctx,id,{section:type,index:hand,loadout:index,weapon:true,hand})).join('')}</div><div class="bg3-loadouts">${[0,1].map(i=>`<button data-loadout="${i}" class="${index===i?'active':''}" title="Equip ${type} loadout ${i+1}">${i+1===1?'I':'II'}</button>`).join('')}<small>${data.activeLoadout?.type===type&&data.activeLoadout?.index===index?'Equipped':'Stored'}</small></div></section>`;
   }
   section(ctx,data,section){
-    const n=data.widths[section]??SECTIONS[section],slots=data.pages[data.page][section];
-    return `<section class="bg3-section bg3-${section}" data-section="${section}"><header draggable="${!data.locked}" data-section-drag="${section}"><span>${section==='features'?'Actions & features':section==='spells'?'Spells':'Items'}</span></header>${section==='features'?`<div class="bg3-generics">${Object.entries(GENERICS).map(([id,a])=>`<button class="bg3-slot bg3-generic" data-generic="${id}" aria-label="${a.name}">${icon(id)}<span class="bg3-cost ${actionCost(ctx.actor,id)}"></span></button>`).join('')}</div>`:''}<div class="bg3-grid" style="--columns:${Math.max(2,n/2)}">${slots.map((id,index)=>this.slot(ctx,id,{section,index})).join('')}</div><div class="bg3-section-resize" data-resize="${section}" role="separator" tabindex="${data.locked?-1:0}" aria-label="Resize ${section} section" aria-orientation="vertical" aria-valuemin="2" aria-valuemax="${SECTIONS[section]/2}" aria-valuenow="${n/2}" title="Drag to resize ${section}. Arrow keys also adjust width."></div></section>`;
+    const width=data.widths[section],slots=data.pages[data.page][section];
+    return `<section class="bg3-section bg3-${section}" data-section="${section}" style="--section-width:${width}px"><header draggable="${!data.locked}" data-section-drag="${section}"><span>${section==='features'?'Actions & features':section==='spells'?'Spells':'Items'}</span></header><div class="bg3-section-content">${section==='features'?`<div class="bg3-generics">${Object.entries(GENERICS).map(([id,a])=>`<button class="bg3-slot bg3-generic" data-generic="${id}" aria-label="${a.name}">${icon(id)}<span class="bg3-cost ${actionCost(ctx.actor,id)}"></span></button>`).join('')}</div>`:''}<div class="bg3-viewport"><div class="bg3-grid">${slots.map((id,index)=>this.slot(ctx,id,{section,index,offscreen:Math.floor(index/SECTION_COLUMNS)>=data.rows||(index%SECTION_COLUMNS)*44>=width})).join('')}</div></div></div><div class="bg3-section-resize" data-resize="${section}" role="separator" tabindex="${data.locked?-1:0}" aria-label="Resize ${section} section" aria-orientation="vertical" aria-valuemin="42" aria-valuemax="526" aria-valuenow="${width}" title="Drag to resize ${section}"></div></section>`;
   }
-  slot(ctx,id,{section,index,loadout,weapon=false,hand=0}){
+  slot(ctx,id,{section,index,loadout,weapon=false,hand=0,offscreen=false}){
     const item=ctx.actor.items.get(id),name=item?.name??(weapon?`${hand?'Off hand':'Main hand'} ${section}`:{features:'Slot a Feature',spells:'Slot a Spell',items:'Slot an Item'}[section]);
     const badge=usesBadge(item);
-    return `<div class="bg3-slot-wrap"><button class="bg3-slot ${item?'filled':'empty'}" data-slot="${section}:${index}" data-item="${esc(item?.id??'')}" ${weapon?`data-loadout-index="${loadout}"`:''} draggable="${!!item&&!layout(ctx).locked}" aria-label="${esc(name)}">${item?`<img src="${esc(item.img)}" alt="">`:`<span class="bg3-empty-icon">${weapon?(hand?'Ⅱ':'Ⅰ'):'+'}</span>`}${badge?`<span class="bg3-uses">${esc(badge)}</span>`:''}${item?.system?.level?`<span class="bg3-level">${item.system.level}</span>`:''}</button><button class="bg3-assign" data-assign="${section}:${index}" ${weapon?`data-loadout-index="${loadout}"`:''} title="Choose ${esc(name)}" aria-label="Choose ${esc(name)}">⌄</button></div>`;
+    return `<div class="bg3-slot-wrap"><button tabindex="${offscreen?-1:0}" class="bg3-slot ${item?'filled':'empty'}" data-slot="${section}:${index}" data-item="${esc(item?.id??'')}" ${weapon?`data-loadout-index="${loadout}"`:''} draggable="${!!item&&!layout(ctx).locked}" aria-label="${esc(name)}">${item?`<img src="${esc(item.img)}" alt="">`:`<span class="bg3-empty-icon">${weapon?(hand?'Ⅱ':'Ⅰ'):'+'}</span>`}${badge?`<span class="bg3-uses">${esc(badge)}</span>`:''}${item?.system?.level?`<span class="bg3-level">${item.system.level}</span>`:''}</button></div>`;
   }
   bind(ctx,data){
     const root=this.root;
@@ -60,7 +59,7 @@ export class CombatBar {
     root.querySelectorAll('[data-command]').forEach(b=>b.onclick=run(e=>this.command(b.dataset.command,ctx,data,e)));
     root.querySelectorAll('[data-generic]').forEach(b=>{b.onclick=run(()=>serial(`${ctx.token.uuid}:barUse`,()=>generic(ctx,b.dataset.generic)));this.hover(b,()=>this.genericTooltip(ctx,b.dataset.generic));});
     root.querySelectorAll('[data-slot]').forEach(b=>{
-      b.onclick=run(e=>b.dataset.item&&!e.altKey?this.useItem(ctx,ctx.actor.items.get(b.dataset.item),e):this.assign(ctx,b));
+      b.onclick=run(e=>b.dataset.item?this.useItem(ctx,ctx.actor.items.get(b.dataset.item),e):this.assign(ctx,b));
       b.oncontextmenu=run(e=>{e.preventDefault();return this.assign(ctx,b);});
       if(b.dataset.item)this.hover(b,()=>this.itemTooltip(ctx,ctx.actor.items.get(b.dataset.item)));
       b.ondragstart=e=>{if(data.locked){e.preventDefault();return;}e.dataTransfer.setData('text/plain',JSON.stringify({type:'Item',uuid:ctx.actor.items.get(b.dataset.item)?.uuid,bg3:{owner:ctx.document.uuid,page:data.page,slot:b.dataset.slot,loadout:b.dataset.loadoutIndex}}));this.hideTooltip();};
@@ -68,7 +67,6 @@ export class CombatBar {
       b.ondragleave=()=>b.classList.remove('drop-target');
       b.ondrop=run(async e=>{e.preventDefault();e.stopPropagation();b.classList.remove('drop-target');if(data.locked)return;let drop;try{drop=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}if(drop.type!=='Item')return;const item=await fromUuid(drop.uuid);if(item?.actor?.uuid!==ctx.actor.uuid)throw new Error("Drag an item from this character's sheet.");await this.assignItem(ctx,b,item.id,drop.bg3);});
     });
-    root.querySelectorAll('[data-assign]').forEach(b=>b.onclick=run(()=>this.assign(ctx,b)));
     root.querySelectorAll('[data-weapon-type]').forEach(b=>b.onclick=run(()=>editLayout(ctx,d=>{d.weaponTab=b.dataset.weaponType;})));
     root.querySelectorAll('[data-loadout]').forEach(b=>b.onclick=run(()=>editLayout(ctx,d=>equipLoadout(ctx,d,d.weaponTab,Number(b.dataset.loadout)))));
     root.querySelectorAll('[data-resize]').forEach(handle=>this.bindResize(handle,ctx,data,run));
@@ -85,18 +83,18 @@ export class CombatBar {
   }
   async assign(ctx,button){if(layout(ctx).locked)return ui.notifications.info("Unlock the bar to change slots.");const [section,index]=(button.dataset.slot??button.dataset.assign).split(':');this.hideTooltip();const title={features:'Slot a Feature',spells:'Slot a Spell',items:'Slot an Item',melee:'Slot a Melee Weapon',ranged:'Slot a Ranged Weapon'}[section];const id=await pickItem(ctx,title,item=>matchesItem(item,section,Number(index)));if(id===undefined)return;await this.assignItem(ctx,button,id);}
   bindResize(handle,ctx,data,run){
-    const key=handle.dataset.resize,max=SECTIONS[key]/2;
+    const key=handle.dataset.resize;
     handle.onkeydown=run(async e=>{
       if(data.locked||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
       e.preventDefault();e.stopPropagation();
-      await editLayout(ctx,d=>{const columns=d.widths[key]/2;d.widths[key]=2*(e.key==='Home'?2:e.key==='End'?max:Math.max(2,Math.min(max,columns+(e.key==='ArrowRight'?1:-1))));});
+      await editLayout(ctx,d=>{d.widths=resizeSections(d.widths,d.order,key,e.key==='Home'?-1000:e.key==='End'?1000:e.key==='ArrowRight'?8:-8);});
     });
     handle.onpointerdown=e=>{
       if(data.locked||e.button!==0)return;
       e.preventDefault();e.stopPropagation();this.hideTooltip();this.resizing=true;
-      const root=this.root,grid=handle.parentElement.querySelector('.bg3-grid'),bounds=root.getBoundingClientRect();
-      const scale=bounds.width/root.offsetWidth,start=e.clientX,initial=data.widths[key]/2;
-      let columns=initial;
+      const root=this.root,bounds=root.getBoundingClientRect();
+      const scale=bounds.width/root.offsetWidth,start=e.clientX;
+      let widths={...data.widths};
       root.style.left=`${bounds.left}px`;root.style.transformOrigin='bottom left';root.style.transform=`translateY(${data.offset.y}px) scale(${scale})`;
       root.classList.add('is-resizing');handle.setPointerCapture(e.pointerId);
       const finish=async save=>{
@@ -105,14 +103,14 @@ export class CombatBar {
         if(handle.hasPointerCapture(e.pointerId))handle.releasePointerCapture(e.pointerId);
         document.removeEventListener('keydown',cancel);this.cancelResize=null;this.resizing=false;
         root.style.removeProperty('left');root.style.removeProperty('transform');root.style.removeProperty('transform-origin');root.classList.remove('is-resizing');
-        if(save&&columns!==initial)await editLayout(ctx,d=>{d.widths[key]=columns*2;d.offset.x=data.offset.x+(width-bounds.width)/2;});
+        if(save)await editLayout(ctx,d=>{d.widths=widths;d.offset.x=data.offset.x+(width-bounds.width)/2;});
         this.schedule();
       };
       const cancel=ev=>{if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();run(()=>finish(false))(ev);}};
       this.cancelResize=()=>run(()=>finish(false))({});document.addEventListener('keydown',cancel);
       handle.onpointermove=ev=>{
-        columns=Math.max(2,Math.min(max,initial+Math.round((ev.clientX-start)/(44*scale))));
-        grid.style.setProperty('--columns',columns);handle.setAttribute('aria-valuenow',columns);
+        widths=resizeSections(data.widths,data.order,key,(ev.clientX-start)/scale);
+        for(const [section,value] of Object.entries(widths)){root.querySelector(`[data-section="${section}"]`).style.setProperty('--section-width',`${value}px`);root.querySelector(`[data-resize="${section}"]`).setAttribute('aria-valuenow',value);}
       };
       handle.onpointerup=run(()=>finish(true));handle.onpointercancel=run(()=>finish(false));
     };
@@ -135,21 +133,20 @@ export class CombatBar {
     if(command==='checks')return this.checks(ctx);
     if(command==='lock')return editLayout(ctx,d=>{d.locked=!d.locked;});
     if(command==='previous'||command==='next')return editLayout(ctx,d=>{d.page=(d.page+(command==='next'?1:-1)+d.pages.length)%d.pages.length;});
-    if(command==='addPage'){if(data.locked)return;if(data.pages.length>=12)throw new Error("The bar supports up to 12 pages.");return editLayout(ctx,d=>{d.pages.push(newPage());d.page=d.pages.length-1;});}
-    if(command==='deletePage'){if(data.locked||data.pages.length===1)return;if(!await confirm('Remove page',`<p>Remove page ${data.page+1} and its slot assignments?</p>`,'Remove page'))return;return editLayout(ctx,d=>{d.pages.splice(d.page,1);d.page=Math.min(d.page,d.pages.length-1);});}
+    if(command==='moreRows'||command==='fewerRows'){if(data.locked)return;return editLayout(ctx,d=>{d.rows=Math.max(2,Math.min(MAX_ROWS,d.rows+(command==='moreRows'?1:-1)));});}
     if(command==='endTurn'){if(isTurn(ctx))return game.user.isGM?game.combat.nextTurn():requestGM({action:'endTurn',source:ctx.token.uuid});return;}
     if(command==='rest'){const pick=await choose('Rest',`<p>${esc(ctx.actor.name)}</p>`,[{value:'short',label:'Short rest'},{value:'long',label:'Long rest'}]);if(!pick)return;return pick.button==='short'?ctx.actor.shortRest():ctx.actor.longRest();}
     if(command==='resource')return this.addResource(ctx);
   }
   async checks(ctx){
     const actor=ctx.actor,abilities=Object.entries(CONFIG.DND5E.abilities),skills=Object.entries(CONFIG.DND5E.skills),signed=n=>Number(n)>=0?`+${n}`:n;
-    const dialog=document.createElement('dialog');dialog.className='bg3-dialog bg3-check-dialog';
-    dialog.innerHTML=`<header><h2>${esc(actor.name)}</h2><button data-close aria-label="Close">×</button></header><div class="bg3-check-columns"><section><h3>Saving throws</h3>${abilities.map(([key,a])=>`<button data-save="${key}"><span>${esc(label(a))}</span><b>${signed(actor.system.abilities[key]?.save?.value??actor.system.abilities[key]?.mod??0)}</b></button>`).join('')}</section><section><h3>Skills</h3>${skills.map(([key,s])=>`<button data-skill="${key}"><span>${actor.system.skills[key]?.proficient?'◆ ':''}${esc(label(s))}</span><b>${signed(actor.system.skills[key]?.total??0)}</b></button>`).join('')}</section></div><footer>${actor.effects.some(e=>e.getFlag(ID,'kind')==='hide')?'<button data-reveal>End hiding</button>':''}${actor.effects.filter(e=>e.getFlag(ID,'kind')==='grapple').map(e=>`<button data-escape="${e.id}">Escape grapple · DC ${e.getFlag(ID,'dc')}</button>`).join('')}</footer>`;
-    const close=()=>{dialog.close();dialog.remove();};dialog.querySelector('[data-close]').onclick=close;dialog.oncancel=close;
-    dialog.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>{close();actor.rollSavingThrow({ability:b.dataset.save});});dialog.querySelectorAll('[data-skill]').forEach(b=>b.onclick=()=>{close();actor.rollSkill({skill:b.dataset.skill});});
-    dialog.querySelector('[data-reveal]')?.addEventListener('click',()=>{close();clearHidden(actor);});
-    dialog.querySelectorAll('[data-escape]').forEach(b=>b.onclick=()=>{close();requestGM({action:'escape',source:ctx.token.uuid,effect:b.dataset.escape}).catch(e=>ui.notifications.error(e.message));});
-    document.body.append(dialog);dialog.showModal();
+    const content=`<div class="bg3-check-columns"><section><h3>Saving throws</h3>${abilities.map(([key,a])=>`<button type="button" data-save="${key}"><span>${esc(label(a))}</span><b>${signed(actor.system.abilities[key]?.save?.value??actor.system.abilities[key]?.mod??0)}</b></button>`).join('')}</section><section><h3>Skills</h3>${skills.map(([key,s])=>`<button type="button" data-skill="${key}"><span>${actor.system.skills[key]?.proficient?'◆ ':''}${esc(label(s))}</span><b>${signed(actor.system.skills[key]?.total??0)}</b></button>`).join('')}</section></div><div>${actor.effects.some(e=>e.getFlag(ID,'kind')==='hide')?'<button type="button" data-reveal>End hiding</button>':''}${actor.effects.filter(e=>e.getFlag(ID,'kind')==='grapple').map(e=>`<button type="button" data-escape="${e.id}">Escape grapple · DC ${e.getFlag(ID,'dc')}</button>`).join('')}</div>`;
+    return showPanel(actor.name,content,app=>{
+      const root=app.element,close=()=>app.close();
+      root.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>{close();actor.rollSavingThrow({ability:b.dataset.save});});root.querySelectorAll('[data-skill]').forEach(b=>b.onclick=()=>{close();actor.rollSkill({skill:b.dataset.skill});});
+      root.querySelector('[data-reveal]')?.addEventListener('click',()=>{close();clearHidden(actor);});
+      root.querySelectorAll('[data-escape]').forEach(b=>b.onclick=()=>{close();requestGM({action:'escape',source:ctx.token.uuid,effect:b.dataset.escape}).catch(e=>ui.notifications.error(e.message));});
+    });
   }
   async addResource(ctx,index){
     if(layout(ctx).locked)return ui.notifications.info('Unlock the bar to change resources.');
@@ -201,6 +198,6 @@ export class CombatBar {
     for(const activity of activities){if(activity.labels?.toHit)facts.push(`${activity.labels.toHit} to hit`);if(activity.save?.dc?.value)facts.push(`DC ${activity.save.dc.value} ${[...(activity.save.ability??[])].map(k=>label(CONFIG.DND5E.abilities[k])).join(' / ')} save`);for(const damage of activity.labels?.damages??[])facts.push(`${damage.formula??''} ${damage.damageType??''}`.trim());}
     if(system.properties?.has?.('concentration'))facts.push('Concentration');if(system.properties?.has?.('ritual'))facts.push('Ritual');if(usesBadge(item))facts.push(`${usesBadge(item)} uses`);if(Number(system.quantity)>1)facts.push(`Quantity ${system.quantity}`);
     const subtitle=item.type==='spell'?`${system.level?'Level '+system.level:'Cantrip'} ${label(CONFIG.DND5E.spellSchools?.[system.school])}`:label(CONFIG.Item.typeLabels?.[item.type]??item.type);
-    return `<header><img src="${esc(item.img)}" alt=""><h2>${esc(item.name)}</h2><small>${esc(subtitle)}</small></header><div class="bg3-tooltip-description">${description||'<p>No description provided.</p>'}</div>${facts.length?`<div class="bg3-tooltip-facts">${facts.map(f=>`<span>${esc(f)}</span>`).join('')}</div>`:''}${activities.length>1?`<div class="bg3-tooltip-facts">${activities.map(a=>`<span>${esc(a.name)}</span>`).join('')}</div>`:''}<footer><i class="${a?.activation?.type??'action'}">●</i> ${esc(label(CONFIG.DND5E.activityActivationTypes?.[a?.activation?.type]??a?.activation?.type??'Use item'))}${item.type==='spell'&&system.level>0&&!usesBadge(item)?` · Level ${system.level} spell slot`:''}<small>${resource?'Right-click to configure this resource':'Right-click or Alt-click to change this slot'}</small></footer>`;
+    return `<header><img src="${esc(item.img)}" alt=""><h2>${esc(item.name)}</h2><small>${esc(subtitle)}</small></header><div class="bg3-tooltip-description">${description||'<p>No description provided.</p>'}</div>${facts.length?`<div class="bg3-tooltip-facts">${facts.map(f=>`<span>${esc(f)}</span>`).join('')}</div>`:''}${activities.length>1?`<div class="bg3-tooltip-facts">${activities.map(a=>`<span>${esc(a.name)}</span>`).join('')}</div>`:''}<footer><i class="${a?.activation?.type??'action'}">●</i> ${esc(label(CONFIG.DND5E.activityActivationTypes?.[a?.activation?.type]??a?.activation?.type??'Use item'))}${item.type==='spell'&&system.level>0&&!usesBadge(item)?` · Level ${system.level} spell slot`:''}<small>${resource?'Right-click to configure this resource':'Right-click to change this slot'}</small></footer>`;
   }
 }
