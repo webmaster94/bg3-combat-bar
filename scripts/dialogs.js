@@ -12,14 +12,14 @@ export function choose(title, content, buttons, {width=440}={}) {
   });
 }
 export async function confirm(title,content,label="Continue") { return !!await choose(title,content,[{value:"yes",label}]); }
-export async function pickItem(ctx, section, predicate) {
+export async function pickItem(ctx, section, predicate, {allowClear=true,emptyText='No matching items on this character.'}={}) {
   const items=ctx.actor.items.filter(predicate).sort((a,b)=>a.name.localeCompare(b.name));
   const dialog=document.createElement("dialog");dialog.className="bg3-dialog bg3-picker";
-  dialog.innerHTML=`<header><h2>${esc(section)}</h2><button data-close aria-label="Close">×</button></header><input type="search" placeholder="Search this character…" aria-label="Search items"><div class="bg3-item-list">${items.map(i=>`<button data-id="${i.id}"><img src="${esc(i.img)}" alt=""><span>${esc(i.name)}</span><small>${esc(i.type)}</small></button>`).join("") || "<p>No matching items on this character.</p>"}</div><footer><button data-clear>Clear slot</button></footer>`;
+  dialog.innerHTML=`<header><h2>${esc(section)}</h2><button data-close aria-label="Close">×</button></header><input type="search" placeholder="Search this character…" aria-label="Search items"><div class="bg3-item-list">${items.map(i=>`<button data-id="${i.id}"><img src="${esc(i.img)}" alt=""><span>${esc(i.name)}</span><small>${esc(i.type==='feat'?'Feature':i.type[0].toUpperCase()+i.type.slice(1))}</small></button>`).join("") || `<p>${esc(emptyText)}</p>`}</div>${allowClear?'<footer><button data-clear>Clear slot</button></footer>':''}`;
   return new Promise(resolve=>{
     const done=value=>{dialog.close();dialog.remove();resolve(value);};
     dialog.querySelector("[data-close]").onclick=()=>done(undefined);
-    dialog.querySelector("[data-clear]").onclick=()=>done(null);
+    if(allowClear)dialog.querySelector("[data-clear]").onclick=()=>done(null);
     dialog.oncancel=e=>{e.preventDefault();done(undefined);};
     dialog.querySelector("input").oninput=e=>dialog.querySelectorAll("[data-id]").forEach(b=>b.hidden=!b.textContent.toLowerCase().includes(e.target.value.toLowerCase()));
     dialog.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>done(b.dataset.id));

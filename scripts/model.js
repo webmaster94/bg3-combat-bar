@@ -22,6 +22,7 @@ export function normalizeLayout(saved) {
   result.pages = (Array.isArray(saved.pages) && saved.pages.length ? saved.pages.slice(0,12) : [newPage()]).map(p =>
     Object.fromEntries(Object.entries(SECTIONS).map(([key,n]) => [key, Array.from({length:n}, (_,i) => typeof p?.[key]?.[i] === "string" ? p[key][i] : null)])));
   result.page = Math.max(0, Math.min(result.pages.length-1, Math.trunc(Number(saved.page) || 0)));
+  result.widths = Object.fromEntries(Object.entries(SECTIONS).map(([key,max])=>[key,Math.max(4,Math.min(max,2*Math.round((Number(saved.widths?.[key])||max)/2)))]));
   result.order = [...new Set([...(saved.order ?? []).filter(k => k === "weapons" || k in SECTIONS), "weapons", ...Object.keys(SECTIONS)])];
   for (const type of ["melee","ranged"]) {
     result.weapons[type] = Array.from({length:2}, (_,i) => Array.from({length:2}, (_,j) => saved.weapons?.[type]?.[i]?.[j] ?? null));

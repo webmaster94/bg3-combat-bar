@@ -7,8 +7,8 @@ const icon = (name,cls="") => `<img class="bg3-generic-icon ${cls}" src="modules
 const label = value => game.i18n.localize(value?.label ?? value ?? "");
 export class CombatBar {
   constructor(){this.ctx=null;this.macroMode=false;this.tooltipGeneration=0;this.busy=false;this.renderQueued=false;}
-  schedule(){if(this.renderQueued)return;this.renderQueued=true;requestAnimationFrame(()=>{this.renderQueued=false;this.render();});}
-  setContext(ctx){if(this.ctx?.token?.uuid!==ctx?.token?.uuid)this.hideTooltip();this.ctx=ctx;this.schedule();}
+  schedule(){if(this.resizing||this.renderQueued)return;this.renderQueued=true;requestAnimationFrame(()=>{this.renderQueued=false;if(!this.resizing)this.render();});}
+  setContext(ctx){if(this.ctx?.token?.uuid!==ctx?.token?.uuid){this.cancelResize?.();this.hideTooltip();}this.ctx=ctx;this.schedule();}
   visible(){return this.ctx?.actor?.isOwner && ["character","npc"].includes(this.ctx.actor.type) && (game.combat?.started||game.settings.get(ID,"outsideCombat"));}
   render(){
     this.root?.remove();this.swap?.remove();this.hideTooltip();
@@ -19,7 +19,7 @@ export class CombatBar {
     const root=this.root=document.createElement("section");root.id="bg3-combat-bar";root.setAttribute("aria-label",`BG3 Combat Bar: ${actor.name}`);
     root.classList.toggle("is-locked",data.locked);root.style.setProperty("--bg3-scale",game.settings.get(ID,"scale"));
     root.style.setProperty("--offset-x",`${data.offset.x}px`);root.style.setProperty("--offset-y",`${data.offset.y}px`);
-    root.innerHTML=`<div class="bg3-upper"><button class="bg3-drag-bar" data-command="move" aria-label="Drag combat bar" title="Drag the bar when unlocked">◆</button><span class="bg3-actor-name">${esc(actor.name)}</span><div class="bg3-resources" data-resource-drop>${this.resources(ctx,data)}</div></div>
+    root.innerHTML=`<div class="bg3-upper"><div class="bg3-identity"><button class="bg3-drag-bar" data-command="move" aria-label="Drag combat bar" title="Drag the bar when unlocked">◆</button><span class="bg3-actor-name">${esc(actor.name)}</span></div><div class="bg3-resources" data-resource-drop>${this.resources(ctx,data)}</div></div>
       <div class="bg3-main"><div class="bg3-portrait-wrap"><button class="bg3-portrait" data-command="sheet" title="Open character sheet" style="--hp:${frac*100}%;--damage:${(1-frac)*100}%"><img src="${esc(actor.img)}" alt="${esc(actor.name)}"><span class="bg3-health-fill"></span><span class="bg3-health">${hp.value??0}<small> / ${hp.max??0}</small></span>${hp.temp>0?`<span class="bg3-temp">+${hp.temp}</span>`:""}</button><button class="bg3-checks" data-command="checks" aria-label="Skills and saving throws" title="Skills and saving throws">${icon("d20")}</button></div>
       <div class="bg3-sections">${data.order.map(section=>section==="weapons"?this.weapons(ctx,data):this.section(ctx,data,section)).join("")}</div>
       <nav class="bg3-controls" aria-label="Bar controls"><button data-command="macros" title="Show Foundry macro bar" aria-label="Show Foundry macro bar">▦</button><button data-command="previous" aria-label="Previous page" title="Previous page">▴</button><span>${data.page+1}/${data.pages.length}</span><button data-command="next" aria-label="Next page" title="Next page">▾</button><button data-command="addPage" aria-label="Add page" title="Add page">+</button><button data-command="deletePage" aria-label="Remove current page" title="Remove current page">−</button><button data-command="lock" aria-label="${data.locked?"Unlock":"Lock"} bar" title="${data.locked?"Unlock":"Lock"} bar"><i class="fa-solid ${data.locked?"fa-lock":"fa-unlock"}"></i></button></nav>
@@ -39,7 +39,7 @@ export class CombatBar {
       const text=item?usesBadge(item):`${r.value??r.max}/${r.max}`;
       html+=`<button class="bg3-resource custom" data-custom="${i}" title="${esc(item?.name??r.name)} · click to use, right-click to configure">${item?`<img src="${esc(item.img)}" alt="">`:'<i>✦</i>'}<small>${esc(item?.name??r.name)}</small><span>${esc(text||'—')}</span></button>`;
     }
-    return html+`<button class="bg3-add-resource" data-command="resource" aria-label="Add custom resource" title="Add resource, or drop a limited-use feature here">+</button>`;
+    return html+`<button class="bg3-add-resource" data-command="resource" aria-label="Add Resource" title="Track a feature, spell, item, or custom counter">+</button>`;
   }
   weapons(ctx,data){
     const type=data.weaponTab,index=data.weaponSet[type];
@@ -47,10 +47,10 @@ export class CombatBar {
   }
   section(ctx,data,section){
     const n=data.widths[section]??SECTIONS[section],slots=data.pages[data.page][section];
-    return `<section class="bg3-section bg3-${section}" data-section="${section}"><header draggable="${!data.locked}" data-section-drag="${section}"><span>${section==='features'?'Actions & features':section==='spells'?'Spells':'Items'}</span><button data-resize="${section}" title="Change section width" aria-label="Change ${section} width">↔</button></header>${section==='features'?`<div class="bg3-generics">${Object.entries(GENERICS).map(([id,a])=>`<button class="bg3-slot bg3-generic" data-generic="${id}" aria-label="${a.name}">${icon(id)}<span class="bg3-cost ${actionCost(ctx.actor,id)}"></span></button>`).join('')}</div>`:''}<div class="bg3-grid" style="--columns:${Math.max(2,n/2)}">${slots.map((id,index)=>this.slot(ctx,id,{section,index})).join('')}</div></section>`;
+    return `<section class="bg3-section bg3-${section}" data-section="${section}"><header draggable="${!data.locked}" data-section-drag="${section}"><span>${section==='features'?'Actions & features':section==='spells'?'Spells':'Items'}</span></header>${section==='features'?`<div class="bg3-generics">${Object.entries(GENERICS).map(([id,a])=>`<button class="bg3-slot bg3-generic" data-generic="${id}" aria-label="${a.name}">${icon(id)}<span class="bg3-cost ${actionCost(ctx.actor,id)}"></span></button>`).join('')}</div>`:''}<div class="bg3-grid" style="--columns:${Math.max(2,n/2)}">${slots.map((id,index)=>this.slot(ctx,id,{section,index})).join('')}</div><div class="bg3-section-resize" data-resize="${section}" role="separator" tabindex="${data.locked?-1:0}" aria-label="Resize ${section} section" aria-orientation="vertical" aria-valuemin="2" aria-valuemax="${SECTIONS[section]/2}" aria-valuenow="${n/2}" title="Drag to resize ${section}. Arrow keys also adjust width."></div></section>`;
   }
   slot(ctx,id,{section,index,loadout,weapon=false,hand=0}){
-    const item=ctx.actor.items.get(id),name=item?.name??(weapon?`${hand?'Off hand':'Main hand'} ${section}`:`Add ${section==='features'?'feature':section==='spells'?'spell':'item'}`);
+    const item=ctx.actor.items.get(id),name=item?.name??(weapon?`${hand?'Off hand':'Main hand'} ${section}`:{features:'Slot a Feature',spells:'Slot a Spell',items:'Slot an Item'}[section]);
     const badge=usesBadge(item);
     return `<div class="bg3-slot-wrap"><button class="bg3-slot ${item?'filled':'empty'}" data-slot="${section}:${index}" data-item="${esc(item?.id??'')}" ${weapon?`data-loadout-index="${loadout}"`:''} draggable="${!!item&&!layout(ctx).locked}" aria-label="${esc(name)}">${item?`<img src="${esc(item.img)}" alt="">`:`<span class="bg3-empty-icon">${weapon?(hand?'Ⅱ':'Ⅰ'):'+'}</span>`}${badge?`<span class="bg3-uses">${esc(badge)}</span>`:''}${item?.system?.level?`<span class="bg3-level">${item.system.level}</span>`:''}</button><button class="bg3-assign" data-assign="${section}:${index}" ${weapon?`data-loadout-index="${loadout}"`:''} title="Choose ${esc(name)}" aria-label="Choose ${esc(name)}">⌄</button></div>`;
   }
@@ -71,19 +71,52 @@ export class CombatBar {
     root.querySelectorAll('[data-assign]').forEach(b=>b.onclick=run(()=>this.assign(ctx,b)));
     root.querySelectorAll('[data-weapon-type]').forEach(b=>b.onclick=run(()=>editLayout(ctx,d=>{d.weaponTab=b.dataset.weaponType;})));
     root.querySelectorAll('[data-loadout]').forEach(b=>b.onclick=run(()=>editLayout(ctx,d=>equipLoadout(ctx,d,d.weaponTab,Number(b.dataset.loadout)))));
-    root.querySelectorAll('[data-resize]').forEach(b=>b.onclick=run(()=>{if(data.locked)return;return editLayout(ctx,d=>{const key=b.dataset.resize;d.widths[key]=d.widths[key]>=SECTIONS[key]?4:d.widths[key]+2;});}));
+    root.querySelectorAll('[data-resize]').forEach(handle=>this.bindResize(handle,ctx,data,run));
     root.querySelectorAll('[data-section-drag]').forEach(h=>h.ondragstart=e=>{if(data.locked)return e.preventDefault();e.dataTransfer.setData('text/plain',JSON.stringify({bg3Section:h.dataset.sectionDrag}));});
     root.querySelectorAll('[data-section]').forEach(s=>{s.ondragover=e=>{if(!data.locked)e.preventDefault();};s.ondrop=run(async e=>{if(data.locked)return;e.preventDefault();let value;try{value=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}if(!data.order.includes(value.bg3Section))return;await editLayout(ctx,d=>{d.order=d.order.filter(k=>k!==value.bg3Section);d.order.splice(d.order.indexOf(s.dataset.section),0,value.bg3Section);});});});
     root.querySelectorAll('[data-economy]').forEach(b=>{const change=restore=>run(()=>serial(`${ctx.document.uuid}:economy`,()=>{const state=economy(ctx);state[b.dataset.economy]=restore?1:0;return ctx.document.setFlag(ID,'economy',state);}));b.onclick=change(false);b.oncontextmenu=e=>{e.preventDefault();change(true)(e);};});
-    root.querySelectorAll('[data-custom]').forEach(b=>{b.onclick=run(()=>this.useResource(ctx,Number(b.dataset.custom)));b.oncontextmenu=run(e=>{e.preventDefault();return this.configureResource(ctx,Number(b.dataset.custom));});});
-    const resources=root.querySelector('[data-resource-drop]');resources.ondragover=e=>{if(!data.locked)e.preventDefault();};resources.ondrop=run(async e=>{e.preventDefault();if(data.locked)return;let drop;try{drop=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}const item=drop.uuid?await fromUuid(drop.uuid):null;if(item?.actor?.uuid!==ctx.actor.uuid||!usesBadge(item))throw new Error("Drop a limited-use item or feature from this character.");await editLayout(ctx,d=>{if(!d.resources.some(r=>r.itemId===item.id))d.resources.push({itemId:item.id});});});
+    root.querySelectorAll('[data-custom]').forEach(b=>{const item=ctx.actor.items.get(data.resources[Number(b.dataset.custom)].itemId);if(item)this.hover(b,()=>this.itemTooltip(ctx,item,true));b.onclick=run(()=>this.useResource(ctx,Number(b.dataset.custom)));b.oncontextmenu=run(e=>{e.preventDefault();return this.configureResource(ctx,Number(b.dataset.custom));});});
+    const resources=root.querySelector('[data-resource-drop]');resources.ondragover=e=>{if(!data.locked)e.preventDefault();};resources.ondrop=run(async e=>{e.preventDefault();if(data.locked)return;let drop;try{drop=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}const item=drop.uuid?await fromUuid(drop.uuid):null;if(item?.actor?.uuid!==ctx.actor.uuid||!usesBadge(item))throw new Error("Drop a feature, spell, or item with its own limited uses from this character.");await editLayout(ctx,d=>{if(!d.resources.some(r=>r.itemId===item.id))d.resources.push({itemId:item.id});});});
     const grip=root.querySelector('[data-command="move"]');grip.onpointerdown=e=>{
       if(data.locked||e.button!==0)return;e.preventDefault();grip.setPointerCapture(e.pointerId);const start={x:e.clientX,y:e.clientY};let offset={...data.offset};
       grip.onpointermove=ev=>{offset={x:Math.max(-innerWidth/2+100,Math.min(innerWidth/2-100,data.offset.x+ev.clientX-start.x)),y:Math.max(-innerHeight+220,Math.min(0,data.offset.y+ev.clientY-start.y))};root.style.setProperty('--offset-x',`${offset.x}px`);root.style.setProperty('--offset-y',`${offset.y}px`);};
       grip.onpointerup=run(async()=>{grip.onpointermove=null;grip.onpointerup=null;await editLayout(ctx,d=>{d.offset=offset;});});
     };
   }
-  async assign(ctx,button){if(layout(ctx).locked)return ui.notifications.info("Unlock the bar to change slots.");const [section,index]=(button.dataset.slot??button.dataset.assign).split(':');const id=await pickItem(ctx,`${section[0].toUpperCase()+section.slice(1)} · choose a slot item`,item=>matchesItem(item,section,Number(index)));if(id===undefined)return;await this.assignItem(ctx,button,id);}
+  async assign(ctx,button){if(layout(ctx).locked)return ui.notifications.info("Unlock the bar to change slots.");const [section,index]=(button.dataset.slot??button.dataset.assign).split(':');this.hideTooltip();const title={features:'Slot a Feature',spells:'Slot a Spell',items:'Slot an Item',melee:'Slot a Melee Weapon',ranged:'Slot a Ranged Weapon'}[section];const id=await pickItem(ctx,title,item=>matchesItem(item,section,Number(index)));if(id===undefined)return;await this.assignItem(ctx,button,id);}
+  bindResize(handle,ctx,data,run){
+    const key=handle.dataset.resize,max=SECTIONS[key]/2;
+    handle.onkeydown=run(async e=>{
+      if(data.locked||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+      e.preventDefault();e.stopPropagation();
+      await editLayout(ctx,d=>{const columns=d.widths[key]/2;d.widths[key]=2*(e.key==='Home'?2:e.key==='End'?max:Math.max(2,Math.min(max,columns+(e.key==='ArrowRight'?1:-1))));});
+    });
+    handle.onpointerdown=e=>{
+      if(data.locked||e.button!==0)return;
+      e.preventDefault();e.stopPropagation();this.hideTooltip();this.resizing=true;
+      const root=this.root,grid=handle.parentElement.querySelector('.bg3-grid'),bounds=root.getBoundingClientRect();
+      const scale=bounds.width/root.offsetWidth,start=e.clientX,initial=data.widths[key]/2;
+      let columns=initial;
+      root.style.left=`${bounds.left}px`;root.style.transformOrigin='bottom left';root.style.transform=`translateY(${data.offset.y}px) scale(${scale})`;
+      root.classList.add('is-resizing');handle.setPointerCapture(e.pointerId);
+      const finish=async save=>{
+        const width=root.getBoundingClientRect().width;
+        handle.onpointermove=null;handle.onpointerup=null;handle.onpointercancel=null;
+        if(handle.hasPointerCapture(e.pointerId))handle.releasePointerCapture(e.pointerId);
+        document.removeEventListener('keydown',cancel);this.cancelResize=null;this.resizing=false;
+        root.style.removeProperty('left');root.style.removeProperty('transform');root.style.removeProperty('transform-origin');root.classList.remove('is-resizing');
+        if(save&&columns!==initial)await editLayout(ctx,d=>{d.widths[key]=columns*2;d.offset.x=data.offset.x+(width-bounds.width)/2;});
+        this.schedule();
+      };
+      const cancel=ev=>{if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();run(()=>finish(false))(ev);}};
+      this.cancelResize=()=>run(()=>finish(false))({});document.addEventListener('keydown',cancel);
+      handle.onpointermove=ev=>{
+        columns=Math.max(2,Math.min(max,initial+Math.round((ev.clientX-start)/(44*scale))));
+        grid.style.setProperty('--columns',columns);handle.setAttribute('aria-valuenow',columns);
+      };
+      handle.onpointerup=run(()=>finish(true));handle.onpointercancel=run(()=>finish(false));
+    };
+  }
   async assignItem(ctx,button,id,source){
     const [section,rawIndex]=(button.dataset.slot??button.dataset.assign).split(':'),index=Number(rawIndex),weapon=['melee','ranged'].includes(section),item=id?ctx.actor.items.get(id):null;
     if(id&&!matchesItem(item,section,index))throw new Error(`That item does not fit a ${section} slot.`);
@@ -106,7 +139,7 @@ export class CombatBar {
     if(command==='deletePage'){if(data.locked||data.pages.length===1)return;if(!await confirm('Remove page',`<p>Remove page ${data.page+1} and its slot assignments?</p>`,'Remove page'))return;return editLayout(ctx,d=>{d.pages.splice(d.page,1);d.page=Math.min(d.page,d.pages.length-1);});}
     if(command==='endTurn'){if(isTurn(ctx))return game.user.isGM?game.combat.nextTurn():requestGM({action:'endTurn',source:ctx.token.uuid});return;}
     if(command==='rest'){const pick=await choose('Rest',`<p>${esc(ctx.actor.name)}</p>`,[{value:'short',label:'Short rest'},{value:'long',label:'Long rest'}]);if(!pick)return;return pick.button==='short'?ctx.actor.shortRest():ctx.actor.longRest();}
-    if(command==='resource')return this.configureResource(ctx);
+    if(command==='resource')return this.addResource(ctx);
   }
   async checks(ctx){
     const actor=ctx.actor,abilities=Object.entries(CONFIG.DND5E.abilities),skills=Object.entries(CONFIG.DND5E.skills),signed=n=>Number(n)>=0?`+${n}`:n;
@@ -118,23 +151,56 @@ export class CombatBar {
     dialog.querySelectorAll('[data-escape]').forEach(b=>b.onclick=()=>{close();requestGM({action:'escape',source:ctx.token.uuid,effect:b.dataset.escape}).catch(e=>ui.notifications.error(e.message));});
     document.body.append(dialog);dialog.showModal();
   }
-  async configureResource(ctx,index){
-    const data=layout(ctx);if(data.locked)return;const r=data.resources[index]??{name:'Resource',max:3,value:3,reset:'long'};
-    const items=ctx.actor.items.filter(i=>usesBadge(i));
-    const result=await choose('Custom resource',`<label>Track<select name="item"><option value="">Custom counter</option>${items.map(i=>`<option value="${i.id}" ${r.itemId===i.id?'selected':''}>${esc(i.name)}</option>`).join('')}</select></label><label>Name<input name="name" value="${esc(r.name??'Resource')}" required maxlength="40"></label><div class="bg3-form-row"><label>Current<input name="value" type="number" min="0" max="999" value="${r.value??3}" required></label><label>Maximum<input name="max" type="number" min="1" max="999" value="${r.max??3}" required></label></div><label>Recover on<select name="reset"><option value="long" ${r.reset==='long'?'selected':''}>Long rest</option><option value="short" ${r.reset==='short'?'selected':''}>Short or long rest</option><option value="turn" ${r.reset==='turn'?'selected':''}>Start of turn</option><option value="manual" ${r.reset==='manual'?'selected':''}>Manual</option></select></label>`,[{value:'save',label:'Save'},...(index!==undefined?[{value:'remove',label:'Remove'}]:[])]);
-    if(!result)return;await editLayout(ctx,d=>{if(result.button==='remove')d.resources.splice(index,1);else{const f=result.data;const next=f.get('item')?{itemId:f.get('item')}:{name:f.get('name'),value:Math.min(Number(f.get('value')),Number(f.get('max'))),max:Number(f.get('max')),reset:f.get('reset')};if(index===undefined)d.resources.push(next);else d.resources[index]=next;}});
+  async addResource(ctx,index){
+    if(layout(ctx).locked)return ui.notifications.info('Unlock the bar to change resources.');
+    this.hideTooltip();
+    const choice=await choose('Add Resource','<p>Track uses from a feature, spell, or item, or create your own counter.</p><p>You can also drag an entry with limited uses onto the resource strip. Spells that only spend spell slots are already tracked by the slot diamonds.</p>',[{value:'feature',label:'Feature'},{value:'spell',label:'Spell'},{value:'item',label:'Item'},{value:'custom',label:'Custom Counter'}],{width:520});
+    if(!choice)return;
+    if(choice.button==='custom')return this.configureResource(ctx,index,true);
+    const kind=choice.button;
+    const id=await pickItem(ctx,{feature:'Track a Feature',spell:'Track a Spell',item:'Track an Item'}[kind],i=>!!usesBadge(i)&&(kind==='feature'?i.type==='feat':kind==='spell'?i.type==='spell':!['feat','spell'].includes(i.type)),{allowClear:false,emptyText:'No matching entries with limited uses. Set up uses on the character sheet first. Spells that only use spell slots are tracked automatically.'});
+    if(!id)return;
+    await editLayout(ctx,d=>{if(d.resources.some((r,i)=>r.itemId===id&&i!==index))return;if(index===undefined)d.resources.push({itemId:id});else d.resources[index]={itemId:id};});
+  }
+  async configureResource(ctx,index,custom=false){
+    const data=layout(ctx);if(data.locked)return;const existing=data.resources[index];
+    if(existing?.itemId&&!custom){
+      const item=ctx.actor.items.get(existing.itemId);
+      const choice=await choose('Tracked Resource',`<p><strong>${esc(item?.name??'Missing item')}</strong> · ${esc(usesBadge(item)||'No limited uses')}</p><p>Uses and recovery come from the character sheet. Click the resource to use it.</p>`,[{value:'replace',label:'Change Resource'},{value:'remove',label:'Remove'}]);
+      if(choice?.button==='replace')return this.addResource(ctx,index);
+      if(choice?.button==='remove')return editLayout(ctx,d=>{d.resources.splice(index,1);});
+      return;
+    }
+    const r=existing&&!existing.itemId?existing:{name:'Resource',max:3,value:3,reset:'long'};
+    const result=await choose('Custom Counter',`<label>Name<input name="name" value="${esc(r.name)}" required maxlength="40"></label><div class="bg3-form-row"><label>Current<input name="value" type="number" min="0" max="999" value="${r.value}" required></label><label>Maximum<input name="max" type="number" min="1" max="999" value="${r.max}" required></label></div><label>Recover on<select name="reset"><option value="long" ${r.reset==='long'?'selected':''}>Long rest</option><option value="short" ${r.reset==='short'?'selected':''}>Short or long rest</option><option value="turn" ${r.reset==='turn'?'selected':''}>Start of turn</option><option value="manual" ${r.reset==='manual'?'selected':''}>Manual</option></select></label>`,[{value:'save',label:'Save'},...(index!==undefined?[{value:'remove',label:'Remove'}]:[])]);
+    if(!result)return;await editLayout(ctx,d=>{if(result.button==='remove')d.resources.splice(index,1);else{const f=result.data;const next={name:f.get('name'),value:Math.min(Number(f.get('value')),Number(f.get('max'))),max:Number(f.get('max')),reset:f.get('reset')};if(index===undefined)d.resources.push(next);else d.resources[index]=next;}});
   }
   async useResource(ctx,index){const r=layout(ctx).resources[index];if(r.itemId)return this.useItem(ctx,ctx.actor.items.get(r.itemId));return editLayout(ctx,d=>{d.resources[index].value=Math.max(0,(d.resources[index].value??d.resources[index].max)-1);});}
-  hover(button,content){const show=()=>{clearTimeout(this.hoverTimer);this.hoverTimer=setTimeout(async()=>{const generation=++this.tooltipGeneration;const html=await content();if(generation!==this.tooltipGeneration||!button.isConnected)return;this.tooltip?.remove();const tip=this.tooltip=document.createElement('aside');tip.className='bg3-tooltip';tip.setAttribute('role','tooltip');tip.innerHTML=html;document.body.append(tip);const r=button.getBoundingClientRect(),t=tip.getBoundingClientRect();tip.style.left=`${Math.max(8,Math.min(innerWidth-t.width-8,r.left))}px`;tip.style.top=`${Math.max(8,r.top-t.height-14)}px`;tip.onmouseenter=()=>clearTimeout(this.leaveTimer);tip.onmouseleave=()=>this.hideTooltip();},250);};button.onmouseenter=show;button.onfocus=show;button.onmouseleave=()=>{clearTimeout(this.hoverTimer);this.leaveTimer=setTimeout(()=>this.hideTooltip(),180);};button.onblur=()=>this.hideTooltip();}
+  hover(button,content){
+    const show=()=>{
+      clearTimeout(this.hoverTimer);clearTimeout(this.leaveTimer);
+      const generation=++this.tooltipGeneration;
+      this.hoverTimer=setTimeout(async()=>{
+        const html=await content();if(generation!==this.tooltipGeneration||!button.isConnected)return;
+        this.tooltip?.remove();const tip=this.tooltip=document.createElement('aside');
+        tip.className='bg3-tooltip';tip.setAttribute('role','tooltip');tip.innerHTML=html;document.body.append(tip);
+        const r=button.getBoundingClientRect(),t=tip.getBoundingClientRect();
+        tip.style.left=`${Math.max(8,Math.min(innerWidth-t.width-8,r.left))}px`;tip.style.top=`${Math.max(8,r.top-t.height-14)}px`;
+        tip.onmouseenter=()=>clearTimeout(this.leaveTimer);tip.onmouseleave=leave;
+      },250);
+    };
+    const leave=()=>{clearTimeout(this.hoverTimer);this.tooltipGeneration++;this.leaveTimer=setTimeout(()=>this.hideTooltip(),180);};
+    button.onmouseenter=show;button.onfocus=show;button.onmouseleave=leave;button.onblur=leave;
+  }
   hideTooltip(){clearTimeout(this.hoverTimer);clearTimeout(this.leaveTimer);this.tooltipGeneration++;this.tooltip?.remove();this.tooltip=null;}
   genericTooltip(ctx,id){const a=GENERICS[id],cost=actionCost(ctx.actor,id);return `<header>${icon(id)}<h2>${a.name}</h2><small>Common action</small></header><div class="bg3-tooltip-description"><p>${a.description}</p></div><footer><i class="${cost}">●</i> ${cost==='attack'?'One attack':cost==='bonus'?'Bonus action':'Action'}</footer>`;}
-  async itemTooltip(ctx,item){
+  async itemTooltip(ctx,item,resource=false){
     if(!item)return '';const system=item.system,activities=Array.from(system.activities??[]),a=activities[0];
     const description=await foundry.applications.ux.TextEditor.implementation.enrichHTML(system.description?.value??'',{async:true,secrets:ctx.actor.isOwner,relativeTo:item,rollData:ctx.actor.getRollData()});
     const facts=[];if(a?.range?.value)facts.push(`${a.range.value} ${label(CONFIG.DND5E.distanceUnits?.[a.range.units]??a.range.units)}`);if(a?.duration?.value)facts.push(`${a.duration.value} ${label(CONFIG.DND5E.timePeriods?.[a.duration.units]??a.duration.units)}`);
     for(const activity of activities){if(activity.labels?.toHit)facts.push(`${activity.labels.toHit} to hit`);if(activity.save?.dc?.value)facts.push(`DC ${activity.save.dc.value} ${[...(activity.save.ability??[])].map(k=>label(CONFIG.DND5E.abilities[k])).join(' / ')} save`);for(const damage of activity.labels?.damages??[])facts.push(`${damage.formula??''} ${damage.damageType??''}`.trim());}
     if(system.properties?.has?.('concentration'))facts.push('Concentration');if(system.properties?.has?.('ritual'))facts.push('Ritual');if(usesBadge(item))facts.push(`${usesBadge(item)} uses`);if(Number(system.quantity)>1)facts.push(`Quantity ${system.quantity}`);
     const subtitle=item.type==='spell'?`${system.level?'Level '+system.level:'Cantrip'} ${label(CONFIG.DND5E.spellSchools?.[system.school])}`:label(CONFIG.Item.typeLabels?.[item.type]??item.type);
-    return `<header><img src="${esc(item.img)}" alt=""><h2>${esc(item.name)}</h2><small>${esc(subtitle)}</small></header><div class="bg3-tooltip-description">${description||'<p>No description provided.</p>'}</div>${facts.length?`<div class="bg3-tooltip-facts">${facts.map(f=>`<span>${esc(f)}</span>`).join('')}</div>`:''}${activities.length>1?`<div class="bg3-tooltip-facts">${activities.map(a=>`<span>${esc(a.name)}</span>`).join('')}</div>`:''}<footer><i class="${a?.activation?.type??'action'}">●</i> ${esc(label(CONFIG.DND5E.activityActivationTypes?.[a?.activation?.type]??a?.activation?.type??'Use item'))}${item.type==='spell'&&system.level>0&&!usesBadge(item)?` · Level ${system.level} spell slot`:''}<small>Right-click to change · Alt-click to choose</small></footer>`;
+    return `<header><img src="${esc(item.img)}" alt=""><h2>${esc(item.name)}</h2><small>${esc(subtitle)}</small></header><div class="bg3-tooltip-description">${description||'<p>No description provided.</p>'}</div>${facts.length?`<div class="bg3-tooltip-facts">${facts.map(f=>`<span>${esc(f)}</span>`).join('')}</div>`:''}${activities.length>1?`<div class="bg3-tooltip-facts">${activities.map(a=>`<span>${esc(a.name)}</span>`).join('')}</div>`:''}<footer><i class="${a?.activation?.type??'action'}">●</i> ${esc(label(CONFIG.DND5E.activityActivationTypes?.[a?.activation?.type]??a?.activation?.type??'Use item'))}${item.type==='spell'&&system.level>0&&!usesBadge(item)?` · Level ${system.level} spell slot`:''}<small>${resource?'Right-click to configure this resource':'Right-click or Alt-click to change this slot'}</small></footer>`;
   }
 }

@@ -1,5 +1,13 @@
 # Verification — 0.1.0
 
+## 0.1.1 interface fixes
+
+The tooltip regression test failed before the fix when the prior slot's leave timer canceled the next slot's open timer. It passes after canceling that timer on entry and invalidating stale descriptions. Nine automated tests pass, including this regression.
+
+Local browser checks covered consecutive item/spell tooltips, feature picker labeling, feature and item resource selection, spell resource eligibility guidance, live border dragging from six to four columns, and persisted widths after reload. Visual inspection confirmed the portrait name position, centered resource strip, centered end-turn control, and increased control spacing.
+
+## Initial release
+
 Verified on September 12, 2026 in the local Foundry v14 test world with D&D 5e 5.3.3 and Midi-QOL 14.0.12.1 active.
 
 - JavaScript syntax check passed.
