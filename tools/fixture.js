@@ -1,0 +1,28 @@
+import {ID,defaultLayout} from '../scripts/model.js';
+export async function createFixture(){
+  if(!['localhost','127.0.0.1'].includes(location.hostname)||!game.user.isGM)throw Error('Local GM test only.');
+  let actor=game.actors.find(a=>a.getFlag(ID,'fixture')==='hero');
+  if(!actor){
+    actor=await Actor.create({name:'Seraphine · BG3 test',type:'character',img:'systems/dnd5e/tokens/heroes/WizardTome.webp',flags:{[ID]:{fixture:'hero'}},system:{abilities:{str:{value:18},dex:{value:16},con:{value:14},int:{value:18},wis:{value:12},cha:{value:10}},attributes:{hp:{value:27,max:44},movement:{walk:30},spellcasting:'int'},spells:{spell1:{value:3,override:4},spell2:{value:2,override:3},spell3:{value:1,override:2}}},prototypeToken:{actorLink:true}});
+    const weapon=(name,type,img)=>({name,type:'weapon',img,system:{type:{value:type},equipped:false,activities:{swing00000000001:{type:'attack',name:'Attack',activation:{type:'action',value:1},attack:{ability:'str',type:{value:type.endsWith('R')?'ranged':'melee',classification:'weapon'}},damage:{parts:[]}}}}});
+    const spell=(name,level,img)=>({name,type:'spell',img,system:{level,school:'evo',description:{value:`<p>A flare of arcane light gathers around your hand, then streaks toward your foe.</p><p><strong>Range</strong> 60 feet · <strong>Duration</strong> Instantaneous</p>`},activities:{spell00000000001:{type:'utility',name:'Cast',activation:{type:'action',value:1},consumption:{spellSlot:true}}}}});
+    await actor.createEmbeddedDocuments('Item',[
+      weapon('Moonlit longsword','martialM','icons/weapons/swords/sword-guard-gold.webp'),weapon('Silver dagger','simpleM','icons/weapons/daggers/dagger-straight-blue.webp'),weapon('Longbow','martialR','icons/weapons/bows/longbow-recurve-leather-brown.webp'),weapon('Hand crossbow','martialR','icons/weapons/crossbows/crossbow-simple-brown.webp'),
+      {name:'Second wind',type:'feat',img:'icons/magic/life/heart-cross-strong-flame-green.webp',system:{uses:{max:'2',spent:0},description:{value:'<p>Draw on your stamina to regain your footing in battle.</p>'},activities:{wind000000000001:{type:'heal',activation:{type:'bonus',value:1},consumption:{targets:[{type:'itemUses',target:'',value:'1'}]},healing:{number:1,denomination:10,bonus:'4',types:['healing']}}}}},
+      {name:'Arcane recovery',type:'feat',img:'icons/magic/symbols/runes-star-magenta.webp',system:{uses:{max:'1',spent:0},description:{value:'<p>Recover some of your magical energy during a short rest.</p>'}}},
+      spell('Magic missile',1,'icons/magic/fire/projectile-meteor-salvo-light-pink.webp'),spell('Shield',1,'icons/magic/defensive/shield-barrier-glowing-triangle-magenta.webp'),spell('Fireball',3,'icons/magic/fire/projectile-fireball-orange-green.webp'),spell('Ray of frost',0,'icons/magic/water/projectile-ice-faceted-shard-salvo-blue.webp'),
+      {name:'Potion of healing',type:'consumable',img:'icons/consumables/potions/potion-bottle-corked-red.webp',system:{type:{value:'potion'},quantity:3,uses:{max:'1',spent:0,autoDestroy:true},description:{value:'<p>Regain 2d4 + 2 Hit Points when you drink this potion.</p>'},activities:{heal000000000001:{type:'heal',activation:{type:'bonus',value:1},consumption:{targets:[{type:'itemUses',target:'',value:'1'}]},healing:{number:2,denomination:4,bonus:'2',types:['healing']}}}}},
+      {name:'Alchemist’s fire',type:'consumable',img:'icons/consumables/potions/potion-bottle-skull-label-orange.webp',system:{type:{value:'oil'},quantity:2}}
+    ]);
+    const data=defaultLayout();for(const item of actor.items){const key=item.type==='feat'?'features':item.type==='spell'?'spells':item.type==='consumable'?'items':null;if(key){const i=data.pages[0][key].indexOf(null);data.pages[0][key][i]=item.id;}}
+    data.weapons.melee[0]=actor.items.filter(i=>i.type==='weapon'&&i.system.type.value.endsWith('M')).map(i=>i.id);data.weapons.ranged[0]=actor.items.filter(i=>i.type==='weapon'&&i.system.type.value.endsWith('R')).map(i=>i.id);data.resources=[{itemId:actor.items.find(i=>i.name==='Second wind').id},{name:'Focus',value:3,max:4,reset:'short'}];await actor.setFlag(ID,'layout',data);
+  }
+  let npc=game.actors.find(a=>a.getFlag(ID,'fixture')==='target');if(!npc)npc=await Actor.create({name:'Training guard · BG3 test',type:'npc',img:'icons/svg/mystery-man.svg',flags:{[ID]:{fixture:'target'}},system:{abilities:{str:{value:6},dex:{value:6}},attributes:{hp:{value:20,max:20},movement:{walk:30}},traits:{size:'med'}},prototypeToken:{actorLink:false}});
+  let scene=game.scenes.find(s=>s.getFlag(ID,'fixture'));if(!scene){scene=await Scene.create({name:'BG3 Combat Bar · test arena',width:1800,height:1100,padding:0.1,backgroundColor:'#29312b',grid:{type:1,size:100,distance:5,units:'ft'},tokenVision:false,flags:{[ID]:{fixture:true}}});const hero=await actor.getTokenDocument({x:600,y:500,actorLink:true,texture:{src:actor.img}}),target=await npc.getTokenDocument({x:700,y:500,actorLink:false});await scene.createEmbeddedDocuments('Token',[hero.toObject(),target.toObject()]);}
+  await scene.activate();await scene.view();
+  let combat=game.combats.find(c=>c.scene?.id===scene.id);if(!combat){combat=await Combat.create({scene:scene.id,active:true});await combat.createEmbeddedDocuments('Combatant',scene.tokens.map((t,i)=>({tokenId:t.id,actorId:t.actorId,sceneId:scene.id,initiative:20-i*10})));await combat.startCombat();}
+  const control=()=>{canvas.tokens.placeables.find(t=>t.actor?.id===actor.id)?.control({releaseOthers:true});game.modules.get(ID).api.refresh();};
+  if(canvas.scene?.id===scene.id&&canvas.ready)control();else Hooks.once('canvasReady',control);
+  ui.notifications.info('BG3 test encounter ready.');
+}
+await createFixture();

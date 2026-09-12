@@ -1,0 +1,4 @@
+{
+  "name": "bg3-combat-bar", "version": "0.1.0", "private": true, "type": "module",
+  "scripts": {"test": "node --test tests/*.test.js", "check": "node tools/check.mjs", "build": "node tools/build.mjs"}
+}
