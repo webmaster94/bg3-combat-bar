@@ -38,6 +38,15 @@ export async function setEconomy(ctx,cost,restore=false) {
     await ctx.document.setFlag(ID,'economy',state);
   });
 }
+export async function changeSpellSlots(ctx,key,restore=false) {
+  return serial(`${ctx.document.uuid}:spellSlots`,async()=>{
+    if(!/^(spell[1-9]|pact)$/.test(key))return;
+    const slots=ctx.actor.system.spells?.[key],max=Number(slots?.max),current=Number(slots?.value);
+    if(!Number.isFinite(max)||max<=0||!Number.isFinite(current))return;
+    const value=Math.max(0,Math.min(max,current+(restore?1:-1)));
+    if(value!==current)await ctx.actor.update({[`system.spells.${key}.value`]:value});
+  });
+}
 export function actionCost(actor, generic) {
   return foundry.utils.getProperty(actor.flags, `${ID}.actionCosts.${generic}`) ?? (generic === "hide" && actor.getFlag(ID,"hideAsBonusAction") ? "bonus" : ["grapple","shove"].includes(generic) ? "attack" : "action");
 }

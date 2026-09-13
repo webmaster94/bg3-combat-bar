@@ -1,5 +1,5 @@
 import {ID,SECTIONS,SECTION_COLUMNS,MAX_ROWS,PAGE_COUNT,resizeSections,GENERICS,escapeHTML as esc,matchesItem,usesBadge} from "./model.js";
-import {layout,editLayout,economy,actionCost,isTurn,equipLoadout,serial,setEconomy} from "./state.js";
+import {layout,editLayout,economy,actionCost,isTurn,equipLoadout,serial,setEconomy,changeSpellSlots} from "./state.js";
 import {classResources} from "./resources.js";
 import {resourceFrame} from "./resource-frame.js";
 import {choose,pickItem,showPanel} from "./dialogs.js";
@@ -43,7 +43,8 @@ export class CombatBar {
     html+='<div class="bg3-spell-resources">';
     for(const [key,spell] of Object.entries(spells)){
       if(!(Number(spell.max)>0))continue;
-      html+=`<span class="bg3-resource spell" title="${key==='pact'?'Pact slots':`Level ${key.replace('spell','')}`} · ${spell.value}/${spell.max}"><small>${key==='pact'?'P':key.replace('spell','')}</small><span class="bg3-pips">${Array.from({length:Math.min(12,spell.max)},(_,i)=>`<i class="${i<spell.value?'':'spent'}">◆</i>`).join('')}</span></span>`;
+      const name=key==='pact'?'Pact slots':`Level ${key.replace('spell','')} spell slots`;
+      html+=`<button class="bg3-resource spell" data-spell-slots="${esc(key)}" aria-label="${name}: ${spell.value} of ${spell.max}" title="${name} · ${spell.value}/${spell.max} · click to spend one, right-click to restore one"><small>${key==='pact'?'P':key.replace('spell','')}</small><span class="bg3-pips" aria-hidden="true">${Array.from({length:Math.min(12,spell.max)},(_,i)=>`<i class="${i<spell.value?'':'spent'}">◆</i>`).join('')}</span></button>`;
     }
     html+='</div></div><div class="bg3-custom-resources">';
     for(const [i,r] of data.resources.entries()){
@@ -60,7 +61,7 @@ export class CombatBar {
   }
   section(ctx,data,section){
     const width=data.widths[section],slots=data.pages[data.page][section];
-    return `<section class="bg3-section bg3-${section}" data-section="${section}" style="--section-width:${width}px"><header draggable="${!data.locked}" data-section-drag="${section}"><span>${section==='features'?'Actions & features':section==='spells'?'Spells':'Items'}</span></header><div class="bg3-section-content">${section==='features'?`<div class="bg3-generics">${Object.entries(GENERICS).map(([id,a])=>`<button class="bg3-slot bg3-generic" data-generic="${id}" aria-label="${a.name}">${icon(id)}<span class="bg3-cost ${actionCost(ctx.actor,id)}"></span></button>`).join('')}</div>`:''}<div class="bg3-viewport"><div class="bg3-grid">${slots.map((id,index)=>this.slot(ctx,id,{section,index,offscreen:Math.floor(index/SECTION_COLUMNS)>=data.rows||(index%SECTION_COLUMNS)*44>=width})).join('')}</div></div></div><div class="bg3-section-resize" data-resize="${section}" role="separator" tabindex="${data.locked?-1:0}" aria-label="Resize ${section} section" aria-orientation="vertical" aria-valuemin="42" aria-valuemax="526" aria-valuenow="${width}" title="Drag to resize ${section}"></div></section>`;
+    return `<section class="bg3-section bg3-${section}" data-section="${section}" style="--section-width:${width}px"><header class="${section==='features'?'bg3-feature-headings':''}" draggable="${!data.locked}" data-section-drag="${section}">${section==='features'?'<span>Actions</span><span>Features</span>':`<span>${section==='spells'?'Spells':'Items'}</span>`}</header><div class="bg3-section-content">${section==='features'?`<div class="bg3-generics">${Object.entries(GENERICS).map(([id,a])=>`<button class="bg3-slot bg3-generic" data-generic="${id}" aria-label="${a.name}">${icon(id)}<span class="bg3-cost ${actionCost(ctx.actor,id)}"></span></button>`).join('')}</div>`:''}<div class="bg3-viewport"><div class="bg3-grid">${slots.map((id,index)=>this.slot(ctx,id,{section,index,offscreen:Math.floor(index/SECTION_COLUMNS)>=data.rows||(index%SECTION_COLUMNS)*44>=width})).join('')}</div></div></div><div class="bg3-section-resize" data-resize="${section}" role="separator" tabindex="${data.locked?-1:0}" aria-label="Resize ${section} section" aria-orientation="vertical" aria-valuemin="42" aria-valuemax="526" aria-valuenow="${width}" title="Drag to resize ${section}"></div></section>`;
   }
   slot(ctx,id,{section,index,loadout,weapon=false,hand=0,offscreen=false}){
     const item=ctx.actor.items.get(id),name=item?.name??(weapon?`${hand?'Off hand':'Main hand'} ${section}`:{features:'Slot a Feature',spells:'Slot a Spell',items:'Slot an Item'}[section]);
@@ -87,6 +88,7 @@ export class CombatBar {
     root.querySelectorAll('[data-section-drag]').forEach(h=>h.ondragstart=e=>{if(data.locked)return e.preventDefault();e.dataTransfer.setData('text/plain',JSON.stringify({bg3Section:h.dataset.sectionDrag}));});
     root.querySelectorAll('[data-section]').forEach(s=>{s.ondragover=e=>{if(!data.locked)e.preventDefault();};s.ondrop=run(async e=>{if(data.locked)return;e.preventDefault();let value;try{value=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}if(!data.order.includes(value.bg3Section))return;await editLayout(ctx,d=>{d.order=d.order.filter(k=>k!==value.bg3Section);d.order.splice(d.order.indexOf(s.dataset.section),0,value.bg3Section);});});});
     root.querySelectorAll('[data-economy]').forEach(b=>{b.onclick=run(()=>setEconomy(ctx,b.dataset.economy));b.oncontextmenu=run(e=>{e.preventDefault();return setEconomy(ctx,b.dataset.economy,true);});});
+    root.querySelectorAll('[data-spell-slots]').forEach(b=>{b.onclick=run(()=>changeSpellSlots(ctx,b.dataset.spellSlots));b.oncontextmenu=run(e=>{e.preventDefault();return changeSpellSlots(ctx,b.dataset.spellSlots,true);});});
     root.querySelectorAll('[data-class-resource]').forEach(b=>{
       const pool=classResources(ctx.actor)[Number(b.dataset.classResource)],item=ctx.actor.items.get(pool.itemId);
       if(item)this.hover(b,()=>this.itemTooltip(ctx,item,'class'));

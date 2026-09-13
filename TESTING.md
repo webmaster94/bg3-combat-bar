@@ -1,5 +1,9 @@
 # Verification
 
+## 0.1.4 spell-slot controls and headings
+
+Seventeen automated tests pass. The new test checks serialized spell-slot clicks, empty/full limits, independent Pact Magic slots, and rejection of missing or invalid pools. Live local UI checks restored a level-one slot from 0/4 to 1/4, then spent it back to 0/4. DOM measurements confirmed that the Actions and Features headings align with the left edges of their corresponding grids. Visual inspection confirmed the shared resource frame and split headings.
+
 ## 0.1.3 reactions and class resources
 
 Sixteen automated tests cover resource detection, prepared uses, legacy Ki/actor resources, feat-granted points without spellcasting, reaction refresh at the actor's own turn across round boundaries, and Midi reaction authority without double consumption.

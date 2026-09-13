@@ -1,8 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {classResources} from '../scripts/resources.js';
-import {economy,consume,setEconomy,canSpend} from '../scripts/state.js';
+import {economy,consume,setEconomy,canSpend,changeSpellSlots} from '../scripts/state.js';
 const feature=(id,name,identifier,max,spent=0)=>({id,type:'feat',name,system:{identifier,uses:{max,spent}}});
+test('manual spell slots serialize clicks, clamp at empty/full, and keep pact slots independent',async()=>{
+  const spells={spell1:{value:2,max:4},pact:{value:1,max:2}},writes=[];
+  const ctx={document:{uuid:'Scene.test.Token.caster'},actor:{system:{spells},update:async changes=>{
+    await new Promise(resolve=>setTimeout(resolve,2));
+    for(const [path,value] of Object.entries(changes)){writes.push(path);spells[path.split('.')[2]].value=value;}
+  }}};
+  await Promise.all([changeSpellSlots(ctx,'spell1'),changeSpellSlots(ctx,'spell1')]);
+  assert.equal(spells.spell1.value,0);assert.equal(spells.pact.value,1);
+  await changeSpellSlots(ctx,'spell1');assert.equal(writes.length,2);
+  await changeSpellSlots(ctx,'pact',true);await changeSpellSlots(ctx,'pact',true);
+  assert.equal(spells.pact.value,2);assert.equal(writes.length,3);
+  await changeSpellSlots(ctx,'spell1',true);assert.equal(spells.spell1.value,1);
+  await changeSpellSlots(ctx,'spell9');await changeSpellSlots(ctx,'invalid.path');
+  assert.equal(writes.length,4);
+});
 test('multiclass pools use prepared feature uses and avoid duplicate actor resources',()=>{
   const monk=feature('m','Renamed monk feature','monks-focus',12,4),sorcerer=feature('s','Font of Magic','font-of-magic',6,2);
   const actor={items:[monk,sorcerer,feature('x','Focused Aim','focused-aim',1)],system:{resources:{primary:{label:'Focus points',max:12,value:12}}}};

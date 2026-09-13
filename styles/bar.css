@@ -106,6 +106,8 @@ body.bg3-replaces-hotbar #hotbar {visibility:hidden!important;pointer-events:non
 .bg3-action-frame{position:relative;display:flex;align-items:center;gap:15px;border:14px solid transparent;border-image:url('../assets/action-frame.svg') 28 fill / 14px / 5px stretch;padding:4px 2px 5px}
 .bg3-action-frame .bg3-section{border:0;border-image:none;box-shadow:none;background:none;padding:0 4px}
 .bg3-action-frame .bg3-section>header{padding:0 1px 5px;height:18px;flex-basis:18px}
+.bg3-action-frame .bg3-section>header.bg3-feature-headings{display:grid;grid-template-columns:136px var(--section-width);gap:7px;padding-left:0;padding-right:0}
+.bg3-feature-headings>span{min-width:0;overflow:hidden;white-space:nowrap}
 .bg3-action-frame .bg3-controls{border:0;border-image:none;box-shadow:none;background:none;padding:0 1px;margin:0;gap:8px 6px}
 .bg3-action-frame .bg3-section-resize{right:-8px;top:0;bottom:0;width:11px}
 .bg3-action-frame .bg3-section-resize:before{left:4px;top:0;bottom:0;width:4px;border-top:7px solid #a18143;border-bottom:7px solid #a18143}
