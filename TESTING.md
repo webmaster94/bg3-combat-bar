@@ -1,3 +1,13 @@
+## 0.1.5 active effects
+
+Twenty-two automated tests pass, including two-row capacity/expansion, effect filtering and grouping, ownership controls, optional VAE settings precedence, reactions with Midi absent, and reactions with Midi tracking disabled.
+
+Local Foundry 14 / D&D 5e 5.3.3 checks used the marked Monk/Wizard fixture. Nine effects occupied one row without expansion; eighteen occupied two rows without expansion. Twenty-one expanded the frame by 110.15 pixels and retained a 24-pixel resource gap. Returning to seven effects removed expansion. Visual checks confirmed transparent gold icons, the continuous resource frame, disabled badges, and a distinct item-enchantment border.
+
+Exercised enriched descriptions, source and duration text, extension tooltip buttons, double-click disable/enable, Ctrl-double-click native configuration, right-click confirmed deletion, and GM Shift-right-click immediate deletion. Passive, Never Show, and hook-vetoed effects were hidden; Always Show and applicable item enchantments appeared. No BG3 errors appeared in browser logs.
+
+VAE settings inheritance and player permission gating are covered by automated tests. A simultaneous live VAE installation and a separate player client were not exercised for this release. Existing Midi-disabled live reaction checks remain documented below. `tools/effect-tests.js` provides repeatable local fixtures and is excluded from release ZIPs.
+
 # Verification
 
 ## 0.1.4 spell-slot controls and headings

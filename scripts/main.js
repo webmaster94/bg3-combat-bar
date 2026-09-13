@@ -2,6 +2,7 @@ import {ID,turnKey} from "./model.js";
 import {context,layout,editLayout,consume,canSpend,economy,isTurn,midiReactions} from "./state.js";
 import {CombatBar} from "./bar.js";
 import {registerRequests,cleanupEffects,clearHidden} from "./actions.js";
+import {registerEffectSettings} from "./effects.js";
 
 let bar;
 function selectedContext(){
@@ -29,6 +30,7 @@ function activityCost(activity){
   return activity.type==='attack'&&activity.item.type==='weapon'?'attack':'action';
 }
 Hooks.once('init',()=>{
+  registerEffectSettings(refresh);
   game.settings.register(ID,'outsideCombat',{name:'Show outside combat',hint:'GM setting for everyone: show the bar whenever an owned character token is selected. Applies immediately.',scope:'world',config:true,type:Boolean,default:false,requiresReload:false,onChange:refresh});
   game.settings.register(ID,'scale',{name:'Bar scale',hint:'Your personal bar size. Applies immediately without reloading.',scope:'client',config:true,type:Number,range:{min:0.55,max:1.4,step:0.05},default:0.85,requiresReload:false,onChange:()=>bar?.applyScale()});
   game.settings.register(ID,'trackSheetActions',{name:'Track actions used from character sheets',hint:'Also update action counters when a system activity is used outside the bar.',scope:'world',config:true,type:Boolean,default:true});
@@ -74,3 +76,5 @@ Hooks.on('dnd5e.restCompleted',async(actor,result)=>{
   refresh();
 });
 window.addEventListener('resize',()=>bar?.schedule());
+Hooks.on('updateWorldTime',()=>bar?.effectsDock?.updateDurations());
+Hooks.on('updateSetting',setting=>{if(setting.key?.startsWith('visual-active-effects.'))refresh();});

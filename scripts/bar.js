@@ -2,6 +2,7 @@ import {ID,SECTIONS,SECTION_COLUMNS,MAX_ROWS,PAGE_COUNT,resizeSections,GENERICS,
 import {layout,editLayout,economy,actionCost,isTurn,equipLoadout,serial,setEconomy,changeSpellSlots} from "./state.js";
 import {classResources} from "./resources.js";
 import {resourceFrame} from "./resource-frame.js";
+import {EffectsDock} from "./effects.js";
 import {choose,pickItem,showPanel} from "./dialogs.js";
 import {generic,requestGM,clearHidden} from "./actions.js";
 
@@ -21,6 +22,7 @@ export class CombatBar {
   }
   render(){
     this.root?.remove();this.swap?.remove();this.hideTooltip();
+    this.effectsDock=null;document.body.classList.remove('bg3-docked-effects');
     const visible=this.visible();document.body.classList.toggle("bg3-replaces-hotbar",!!visible&&!this.macroMode);
     if(!visible)return;
     if(this.macroMode){this.swap=document.createElement("button");this.swap.className="bg3-return";this.swap.title="Return to BG3 Combat Bar";this.swap.innerHTML=`${icon("swords")} Combat bar`;this.swap.onclick=()=>{this.macroMode=false;this.render();};document.body.append(this.swap);return;}
@@ -33,6 +35,7 @@ export class CombatBar {
       <nav class="bg3-controls" aria-label="Bar controls"><div class="bg3-control-column"><small>Page</small><button data-command="previous" aria-label="Previous page" title="Previous page">▴</button><span>${data.page+1}/${PAGE_COUNT}</span><button data-command="next" aria-label="Next page" title="Next page">▾</button></div><div class="bg3-control-column"><small>Rows</small><button data-command="moreRows" aria-label="Add row" title="Add row" ${data.rows>=MAX_ROWS||data.locked?'disabled':''}>+</button><span>${data.rows}</span><button data-command="fewerRows" aria-label="Remove row" title="Remove row" ${data.rows<=2||data.locked?'disabled':''}>−</button></div><div class="bg3-control-bottom"><button data-command="lock" aria-label="${data.locked?"Unlock":"Lock"} bar" title="${data.locked?"Unlock":"Lock"} bar"><i class="fa-solid ${data.locked?"fa-lock":"fa-unlock"}"></i></button><button data-command="macros" title="Show Foundry macro bar" aria-label="Show Foundry macro bar">▦</button></div></nav></div>
       <button class="bg3-end-turn ${isTurn(ctx)?"is-turn":""}" data-command="endTurn" ${isTurn(ctx)?"":"disabled"} aria-label="End turn">${icon("hourglass")}<small>End turn</small></button><button class="bg3-rest" data-command="rest" title="Short or long rest" aria-label="Rest">${icon("rest")}</button></div>`;
     document.body.append(root);this.paintResources();this.applyScale();this.bind(ctx,data);
+    this.effectsDock=new EffectsDock(this,ctx);this.effectsDock.render().catch(error=>console.error(`${ID} | effects`,error));
   }
   resources(ctx,data){
     const e=economy(ctx),spells=ctx.actor.system.spells??{},pools=classResources(ctx.actor),hasSpellSlots=Object.values(spells).some(s=>Number(s.max)>0);
@@ -134,6 +137,7 @@ export class CombatBar {
         widths=resizeSections(data.widths,data.order,key,(ev.clientX-start)/scale);
         for(const [section,value] of Object.entries(widths)){root.querySelector(`[data-section="${section}"]`).style.setProperty('--section-width',`${value}px`);root.querySelector(`[data-resize="${section}"]`).setAttribute('aria-valuenow',value);}
         this.paintResources();
+        this.effectsDock?.layout();
       };
       handle.onpointerup=run(()=>finish(true));handle.onpointercancel=run(()=>finish(false));
     };
@@ -197,7 +201,7 @@ export class CombatBar {
   }
   async useResource(ctx,index){const r=layout(ctx).resources[index];if(r.itemId)return this.useItem(ctx,ctx.actor.items.get(r.itemId));return editLayout(ctx,d=>{d.resources[index].value=Math.max(0,(d.resources[index].value??d.resources[index].max)-1);});}
   async changeClassResource(ctx,pool,delta){return serial(`${ctx.document.uuid}:classResource`,async()=>{const resource=ctx.actor.system.resources[pool.resourceKey];await ctx.actor.update({[`system.resources.${pool.resourceKey}.value`]:Math.max(0,Math.min(resource.max,resource.value+delta))});});}
-  hover(button,content){
+  hover(button,content,onShow){
     const show=()=>{
       clearTimeout(this.hoverTimer);clearTimeout(this.leaveTimer);
       const generation=++this.tooltipGeneration;
@@ -205,6 +209,7 @@ export class CombatBar {
         const html=await content();if(generation!==this.tooltipGeneration||!button.isConnected)return;
         this.tooltip?.remove();const tip=this.tooltip=document.createElement('aside');
         tip.className='bg3-tooltip';tip.setAttribute('role','tooltip');tip.innerHTML=html;document.body.append(tip);
+        onShow?.(tip);
         const r=button.getBoundingClientRect(),t=tip.getBoundingClientRect();
         tip.style.left=`${Math.max(8,Math.min(innerWidth-t.width-8,r.left))}px`;tip.style.top=`${Math.max(8,r.top-t.height-14)}px`;
         tip.onmouseenter=()=>clearTimeout(this.leaveTimer);tip.onmouseleave=leave;

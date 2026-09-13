@@ -65,7 +65,22 @@ These are actor flags applied by the feature's transferred effect. A non-transfe
 
 Items use `item.use()` and the system activity hooks, allowing Midi-QOL to run its normal attack, damage, resource, and effect workflows. Common grapple and shove saves use Midi's `rollAbility` socket handler when available. The module then applies the condition or push after resolving the save. It also works without Midi-QOL, using the D&D roll APIs and a GM request for documents a player cannot update.
 
-When Midi-QOL reaction tracking is enabled for the actor, its reaction counter is authoritative. The bar reads that counter, including extra reactions, and uses Midi's API for manual spending and restoring. Reactions prompted by Midi update the bar without spending twice. With Midi reaction tracking disabled, the bar maintains its own turn-based counter.
+When Midi-QOL reaction tracking is enabled for the actor, its reaction counter is authoritative. The bar reads that counter, including extra reactions, and uses Midi's API for manual spending and restoring. Reactions prompted by Midi update the bar without spending twice. Without Midi-QOL installed, or with its reaction tracking disabled, the bar maintains its own counter. Reaction activities spend it automatically, clicks spend it manually, and right-click restores it. It refreshes at the start of that actor's next turn, not at the round boundary.
+
+## Active effects
+
+Active effects appear at the top-right of the bar. Icons fill one row, then a second row; only overflow beyond both rows widens the bar. The resource frame keeps a gap from the icons, including its upper class-resource tier. Removing effects shrinks the bar again.
+
+- Hover for the enriched description, source, remaining duration, and disabled/passive state.
+- Double-click to enable or disable; Ctrl/Command-double-click opens the native effect editor.
+- Right-click to cancel through Foundry's confirmation dialog. GMs can Shift-right-click to cancel immediately.
+- Applicable item enchantments appear alongside actor effects. Suppressed effects and icons set to Never are hidden; Always Show overrides the passive/disabled filters.
+
+Settings include personal visibility, icon size, tooltip font size, vertical gap and right inset, plus world-wide passive/disabled filters and player interaction permission. Changes apply without reloading. Players can only modify effects they own, and the GM can disable player interaction.
+
+Visual Active Effects is optional. When active, its matching settings govern the dock, and its standalone panel is hidden while the combat bar is shown. Switching to macros or hiding the bar restores that panel. Position offsets apply relative to this bar. The `visual-active-effects.createEffectButtons` and `visual-active-effects.prepareActiveEffectContext` hooks support extension buttons and tooltip content.
+
+The behavior was independently implemented against [Visual Active Effects 14.0.3](https://git.gay/Zhell/visual-active-effects). Its source files and artwork are not bundled.
 
 ## Development
 

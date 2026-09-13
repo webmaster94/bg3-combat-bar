@@ -46,7 +46,7 @@ function setup(){
   globalThis.game={combat:{id:'fight',started:true,round:1,turn:0,turns:[{id:'guard-c',tokenId:'guard',sceneId:'scene'},{id:'hero-c',tokenId:'hero',sceneId:'scene'}]},modules:new Map()};
   return {ctx,actions};
 }
-test('reaction remains spent across other turns and round boundaries, refreshing only at own turn',async()=>{
+test('without Midi installed, reaction remains spent across other turns and round boundaries, refreshing only at own turn',async()=>{
   const {ctx}=setup();
   await consume(ctx,'reaction');assert.equal(canSpend(ctx,'reaction'),false);
   assert.equal(economy(ctx).action,1);assert.equal(economy(ctx).bonus,1);
@@ -66,5 +66,13 @@ test('Midi is the reaction authority; its workflows are not charged a second tim
   await setEconomy(ctx,'reaction',true);assert.equal(economy(ctx).reaction,1);
   actions.reactionsUsed=1;assert.equal(economy(ctx).reaction,0);
   actions.reactionsMax=2;assert.equal(economy(ctx).reaction,1);
+  delete globalThis.MidiQOL;delete globalThis.game;
+});
+
+test('installed Midi with reaction tracking disabled uses the native counter',async()=>{
+  const {ctx}=setup();game.modules.set('midi-qol',{active:true});
+  globalThis.MidiQOL={configSettings:()=>({enforceReactions:'none'}),setReactionUsed:()=>assert.fail('Midi must not spend'),removeReactionUsed:()=>assert.fail('Midi must not restore')};
+  await consume(ctx,'reaction');assert.equal(economy(ctx).reaction,0);
+  await setEconomy(ctx,'reaction',true);assert.equal(economy(ctx).reaction,1);
   delete globalThis.MidiQOL;delete globalThis.game;
 });
