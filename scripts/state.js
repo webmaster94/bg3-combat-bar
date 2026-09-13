@@ -19,7 +19,24 @@ export function economy(ctx) {
   const index=combat?.turns.findIndex(c=>c.tokenId===ctx.token?.id&&c.sceneId===ctx.token?.parent?.id)??-1;
   const key=combat?.started&&index>=0?`${combat.id}:${combat.round-(combat.turn<index?1:0)}:${combat.turns[index].id}`:turnKey(combat);
   const saved = ctx.document.getFlag(ID,"economy");
-  return saved?.key === key ? structuredClone(saved) : freshEconomy(key);
+  const state=saved?.key === key ? {...freshEconomy(key),...structuredClone(saved)} : freshEconomy(key);
+  if(midiReactions(ctx.actor)){
+    const actions=ctx.actor.getFlag('midi-qol','actions');
+    state.reaction=Math.max(0,Number(actions?.reactionsMax??1)-Number(actions?.reactionsUsed??0));
+  }
+  return state;
+}
+export function midiReactions(actor) {
+  const midi=globalThis.MidiQOL;
+  return !!game.modules?.get('midi-qol')?.active && typeof midi?.setReactionUsed==='function' && typeof midi?.removeReactionUsed==='function' && ['all','displayOnly',actor.type].includes(midi.configSettings?.().enforceReactions);
+}
+export async function setEconomy(ctx,cost,restore=false) {
+  return serial(`${ctx.document.uuid}:economy`,async()=>{
+    if(!restore&&economy(ctx)[cost]<=0)return;
+    if(cost==='reaction'&&midiReactions(ctx.actor))return restore?MidiQOL.removeReactionUsed(ctx.actor,true):MidiQOL.setReactionUsed(ctx.actor);
+    const state=economy(ctx);state[cost]=restore?1:0;
+    await ctx.document.setFlag(ID,'economy',state);
+  });
 }
 export function actionCost(actor, generic) {
   return foundry.utils.getProperty(actor.flags, `${ID}.actionCosts.${generic}`) ?? (generic === "hide" && actor.getFlag(ID,"hideAsBonusAction") ? "bonus" : ["grapple","shove"].includes(generic) ? "attack" : "action");
@@ -35,6 +52,8 @@ export function attacksPerAction(actor) {
 }
 export async function consume(ctx, cost) {
   if (!game.combat?.started) return;
+  // Midi marks reaction use itself, including reactions prompted outside a sheet activity.
+  if(cost==='reaction'&&midiReactions(ctx.actor))return;
   return serial(`${ctx.document.uuid}:economy`, async () => {
     const next = spendEconomy(economy(ctx),cost,attacksPerAction(ctx.actor));
     if (!next) throw new Error(`No ${cost === "attack" ? "attacks or actions" : `${cost} actions`} remaining. Right-click its resource to restore a spent action.`);

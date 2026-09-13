@@ -10,9 +10,9 @@ In Foundry's **Install Module** dialog, paste this manifest URL:
 https://github.com/webmaster94/bg3-combat-bar/releases/latest/download/module.json
 ```
 
-Extract `bg3-combat-bar-0.1.2.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
+Extract `bg3-combat-bar-0.1.3.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
 
-The bar appears during combat for the selected owned PC or NPC. If nothing is selected, it follows the owned current combatant or the user's assigned character. The client setting **Show outside combat** also allows preparing a bar before combat.
+The bar appears during combat for the selected owned PC or NPC. If nothing is selected, it follows the owned current combatant or the user's assigned character. The GM-controlled world setting **Show outside combat** allows everyone to prepare their bars before combat. **Bar scale** remains a personal client setting. Both settings apply when saved without a browser reload; changing scale updates the existing bar in place.
 
 ## Controls
 
@@ -23,8 +23,10 @@ The bar appears during combat for the selected owned PC or NPC. If nothing is se
 - The page controls switch between ten pages. The adjacent **Rows + / −** controls reveal between two and six rows, starting at two. Reducing rows hides their assignments until expanded again. Weapons and resources are shared across pages. Locking prevents layout changes while allowing item use, page changes, and weapon switching.
 - The grid button beside the lock, below the page and row controls, switches to Foundry's macro bar. **Shift+B** also switches bars. A return button remains above the macro bar.
 - Click the die outside the left edge of the portrait for skills, saving throws, ending Hide, and escaping a grapple. Click the portrait to open the character sheet.
-- Click an action or bonus-action resource to mark it spent. Right-click to restore it, for corrections or additional actions granted by another feature.
+- Click an action, bonus-action, or reaction resource to mark it spent. Right-click to restore it, for corrections or additional actions granted by another feature. Reactions used through system activities are tracked, and recover at the start of the character's next turn.
 - Click **+** in the resource strip and choose **Feature**, **Spell**, **Item**, or **Custom Counter**. The first three open a picker for entries on the character with their own limited uses. You can also drag an entry with limited uses onto the resource strip. Spells that only use spell slots are already tracked by the slot diamonds. Custom counters can recover on a turn, short rest, or long rest. Item-backed resources use the item's own consumption and recovery rules.
+- Monk's Focus, Ki, Font of Magic, Sorcery Points, and Metamagic Adept resources appear automatically from their feature's prepared uses. Class points use circles, while spell slots use diamonds. Monk circles are red. Sorcery circles are pink when the actor has spell slots and purple otherwise. A fitted ornamental tier places class points above spell slots; noncasters keep a compact single resource row. Both tiers are centered and share one continuous outline, without a border between them. No spellcasting class is required to track feat-granted points.
+- Click a class-point resource to use its feature through the system, and right-click to open the feature sheet. Uses, scale formulas, and rest recovery stay owned by the original feature. A manually tracked copy of the same feature is hidden from the lower strip to avoid duplicate counters. Older sheets with labeled Focus Points, Ki Points, or Sorcery Points actor resources are also supported; click those to spend one point, and right-click to restore one.
 - End turn is enabled only on this token's turn. Rest opens the system's short- or long-rest workflow.
 
 Assignments live in `flags.bg3-combat-bar.layout` on a linked actor, or on the TokenDocument for an unlinked token. Limited uses and spell slots come from the D&D system. Action counters refresh at the actor's own turn.
@@ -61,6 +63,8 @@ These are actor flags applied by the feature's transferred effect. A non-transfe
 ## Midi-QOL
 
 Items use `item.use()` and the system activity hooks, allowing Midi-QOL to run its normal attack, damage, resource, and effect workflows. Common grapple and shove saves use Midi's `rollAbility` socket handler when available. The module then applies the condition or push after resolving the save. It also works without Midi-QOL, using the D&D roll APIs and a GM request for documents a player cannot update.
+
+When Midi-QOL reaction tracking is enabled for the actor, its reaction counter is authoritative. The bar reads that counter, including extra reactions, and uses Midi's API for manual spending and restoring. Reactions prompted by Midi update the bar without spending twice. With Midi reaction tracking disabled, the bar maintains its own turn-based counter.
 
 ## Development
 

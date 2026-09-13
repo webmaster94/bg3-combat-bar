@@ -1,5 +1,17 @@
 # Verification
 
+## 0.1.3 reactions and class resources
+
+Sixteen automated tests cover resource detection, prepared uses, legacy Ki/actor resources, feat-granted points without spellcasting, reaction refresh at the actor's own turn across round boundaries, and Midi reaction authority without double consumption.
+
+Local Foundry v14 build 360 / D&D5e 5.3.3 tests passed for four marked fixtures: Monk 6 / Wizard 3, Monk 8 with Ki, Sorcerer 20, and Fighter 4 with Metamagic Adept. Each passed resource detection, native feature use, and native short- or long-rest recovery. The fixture class-point maxima use class-level formulas, except the feat's two-point pool. Visual checks confirmed red monk pips above spell slots, a compact noncasting monk row, twenty pink sorcery pips above nine slot levels, and purple feat-granted pips without spell slots. The final upper frame fits the class-point row rather than spanning the lower resource strip. DOM measurements confirmed the two tiers have the same horizontal center. A single SVG outline surrounds both tiers without an internal gold seam. Class-point pips are circles; spell-slot pips remain diamonds.
+
+With Midi reaction tracking temporarily enabled, live checks passed for bar spend/restore, external Midi reaction consumption, and a native reaction activity consumed exactly once. The original Midi settings were restored. With Midi reaction tracking disabled, the bar's own spend/restore also passed.
+
+The native settings dialog saved world-wide outside-combat visibility and personal scale without reloading. A slider change from 0.85 to 0.6 changed the rendered scale immediately; 0.85 and combat-only visibility were restored afterward. One Foundry CombatTracker render error occurred while the new test encounter was being created; it did not prevent the resource or reaction checks. The existing viewport-height warning also remains unrelated to this module.
+
+`tools/resource-tests.js` creates the four local fixtures and provides the native-use/rest and Midi checks. It refuses remote execution and is excluded from release ZIPs.
+
 ## 0.1.2 fixed grids and shared frame
 
 Eleven automated tests pass. New coverage checks migration from the original row/column layout to ten pages, fractional divider widths, conservation of adjacent section space, and preservation of assignments hidden by width or row limits.

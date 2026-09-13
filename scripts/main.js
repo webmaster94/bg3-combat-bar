@@ -1,5 +1,5 @@
 import {ID,turnKey} from "./model.js";
-import {context,layout,editLayout,consume,canSpend,economy,isTurn} from "./state.js";
+import {context,layout,editLayout,consume,canSpend,economy,isTurn,midiReactions} from "./state.js";
 import {CombatBar} from "./bar.js";
 import {registerRequests,cleanupEffects,clearHidden} from "./actions.js";
 
@@ -23,13 +23,14 @@ function activityContext(activity){
 }
 function activityCost(activity){
   const activation=activity.activation?.type;
+  if(activation?.startsWith('reaction'))return 'reaction';
   if(activation==='bonus')return 'bonus';
   if(activation!=='action')return null;
   return activity.type==='attack'&&activity.item.type==='weapon'?'attack':'action';
 }
 Hooks.once('init',()=>{
-  game.settings.register(ID,'outsideCombat',{name:'Show outside combat',hint:'Show the bar whenever an owned character token is selected.',scope:'client',config:true,type:Boolean,default:false,onChange:refresh});
-  game.settings.register(ID,'scale',{name:'Bar scale',scope:'client',config:true,type:Number,range:{min:0.55,max:1.4,step:0.05},default:0.85,onChange:refresh});
+  game.settings.register(ID,'outsideCombat',{name:'Show outside combat',hint:'GM setting for everyone: show the bar whenever an owned character token is selected. Applies immediately.',scope:'world',config:true,type:Boolean,default:false,requiresReload:false,onChange:refresh});
+  game.settings.register(ID,'scale',{name:'Bar scale',hint:'Your personal bar size. Applies immediately without reloading.',scope:'client',config:true,type:Number,range:{min:0.55,max:1.4,step:0.05},default:0.85,requiresReload:false,onChange:()=>bar?.applyScale()});
   game.settings.register(ID,'trackSheetActions',{name:'Track actions used from character sheets',hint:'Also update action counters when a system activity is used outside the bar.',scope:'world',config:true,type:Boolean,default:true});
   game.keybindings.register(ID,'toggleMacroBar',{name:'Swap combat and macro bars',editable:[{key:'KeyB',modifiers:['Shift']}],onDown:()=>{if(!bar?.visible())return false;bar.macroMode=!bar.macroMode;bar.render();return true;}});
 });
@@ -54,6 +55,7 @@ Hooks.on('updateToken',(_token,changes)=>{if('x' in changes||'y' in changes||'el
 Hooks.on('updateActor',()=>cleanupEffects());
 Hooks.on('dnd5e.preUseActivity',(activity)=>{
   const ctx=activityContext(activity),cost=activityCost(activity);if(!ctx||!cost)return;
+  if(cost==='reaction'&&midiReactions(ctx.actor))return;
   if(!game.settings.get(ID,'trackSheetActions')&&bar?.usingActor!==ctx.actor.uuid)return;
   if(!canSpend(ctx,cost)){ui.notifications.warn('That action is spent. Right-click its resource on the combat bar to restore it.');return false;}
 });

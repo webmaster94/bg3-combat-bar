@@ -77,14 +77,14 @@ export function usesBadge(item) {
   return "";
 }
 export function turnKey(combat) { return combat?.started ? `${combat.id}:${combat.round}:${combat.turn}` : "outside"; }
-export function freshEconomy(key) { return {key, action:1, bonus:1, attacks:0, attackAction:false, dash:0}; }
+export function freshEconomy(key) { return {key, action:1, bonus:1, reaction:1, attacks:0, attackAction:false, dash:0}; }
 export function spendEconomy(state, cost, attacksPerAction=1) {
   const next = clone(state);
   if (cost === "attack") {
     if (next.attackAction && next.attacks > 0) next.attacks--;
     else if (next.action > 0) { next.action--; next.attackAction=true; next.attacks=Math.max(0,attacksPerAction-1); }
     else return null;
-  } else if (["action","bonus"].includes(cost)) {
+  } else if (["action","bonus","reaction"].includes(cost)) {
     if (next[cost] < 1) return null;
     next[cost]--;
   }

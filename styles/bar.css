@@ -113,3 +113,26 @@ body.bg3-replaces-hotbar #hotbar {visibility:hidden!important;pointer-events:non
 .bg3-resource-crown .bg3-resources{max-width:100%;margin:0;border-bottom:2px solid #141a19;min-height:29px;padding-bottom:2px;border-radius:7px 7px 0 0}
 .bg3-resource-crown:before,.bg3-resource-crown:after{content:'';position:absolute;bottom:-2px;width:18px;height:22px;background:url('../assets/crown-wing.svg') center/100% 100% no-repeat;pointer-events:none}
 .bg3-resource-crown:before{left:-3px}.bg3-resource-crown:after{right:-3px;transform:scaleX(-1)}
+
+/* Resource tiers share a measured outline, so the raised row has no bottom seam. */
+.bg3-resource-crown .bg3-resources{position:relative;isolation:isolate;overflow:visible;align-items:end;gap:5px;padding:13px 14px 7px;background:none;border:0;border-radius:0;box-shadow:none}
+.bg3-resource-outline{position:absolute;z-index:-1;pointer-events:none;overflow:visible}
+.bg3-economy-resources,.bg3-spell-resources,.bg3-custom-resources,.bg3-class-resources{display:flex;flex-wrap:wrap;gap:2px;align-items:center;justify-content:center}
+.bg3-economy-resources{flex-shrink:0;align-self:end}
+.bg3-casting-resources{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.bg3-class-resources{gap:5px}
+.bg3-custom-resources{max-width:310px;justify-content:start}
+.bg3-casting-resources:empty,.bg3-spell-resources:empty,.bg3-custom-resources:empty{display:none}
+#bg3-combat-bar .bg3-class-pool{flex-wrap:wrap;gap:3px 6px;padding:4px 7px;border-color:#897049;background:linear-gradient(#353035,#15151d);min-height:27px}
+.bg3-class-pool small{font-size:10px;letter-spacing:.2px}
+.bg3-class-pool .bg3-pips{flex-wrap:wrap;justify-content:center;max-width:220px;gap:4px}
+.bg3-class-pool .bg3-pips i{display:block;width:7px;height:7px;border-radius:50%;font-size:0;background:currentColor;box-shadow:0 0 4px currentColor}
+.bg3-class-pool.sorcery i{color:#c578f0;text-shadow:0 0 6px #a94edc}
+.bg3-class-pool.sorcery.with-spellcasting i{color:#ff83b8;text-shadow:0 0 6px #e55292}
+.bg3-class-pool.monk i{color:#ef6262;text-shadow:0 0 6px #d62c39}
+.bg3-class-pool .bg3-pips i.spent{opacity:.22;text-shadow:none;box-shadow:none}
+.bg3-pool-count{font-size:10px;color:#ebdcb6;font-variant-numeric:tabular-nums}
+.bg3-resource.reaction i,.bg3-tooltip .reaction{color:#7dd3ea;text-shadow:0 0 6px #458bba}
+.bg3-casting-resources:has(.bg3-spell-resources:not(:empty))>.bg3-class-resources{position:absolute;z-index:1;bottom:calc(100% - 2px);left:50%;transform:translateX(-50%);width:max-content;max-width:520px;flex-wrap:wrap;gap:4px;padding:15px 17px 3px;background:none;border:0}
+.bg3-casting-resources:has(.bg3-spell-resources:not(:empty))>.bg3-class-resources:before{content:'';position:absolute;left:50%;top:-7px;transform:translateX(-50%);width:92px;height:25px;background:url('../assets/resource-crest.svg') center/contain no-repeat;pointer-events:none}
+.bg3-resource-crown .bg3-resources:not(:has(.bg3-class-resources)):before,.bg3-resource-crown .bg3-resources:not(:has(.bg3-spell-resources .spell)):before{content:'';position:absolute;left:50%;top:-9px;transform:translateX(-50%);width:92px;height:25px;background:url('../assets/resource-crest.svg') center/contain no-repeat;pointer-events:none}
