@@ -15,9 +15,9 @@ export async function run(){
   const previous=actor.effects.filter(e=>e.getFlag(ID,'effectFixture')).map(e=>e.id);if(previous.length)await actor.deleteEmbeddedDocuments('ActiveEffect',previous);
   const items=actor.items.filter(i=>i.getFlag(ID,'effectFixture')).map(i=>i.id);if(items.length)await actor.deleteEmbeddedDocuments('Item',items);
   if(mode==='clear')return;
-  const prefs=effectSettings(),main=bar.root.querySelector('.bg3-main'),resources=bar.root.querySelector('.bg3-resources');
+  const prefs=effectSettings(),main=bar.root.querySelector('.bg3-main'),frame=bar.root.querySelector('.bg3-action-frame'),resources=bar.root.querySelector('.bg3-resources');
   const scale=main.getBoundingClientRect().width/main.offsetWidth,oldExpansion=parseFloat(bar.root.style.getPropertyValue('--effects-expand'))||0;
-  const available=(main.getBoundingClientRect().right-resources.getBoundingClientRect().right)/scale-24-oldExpansion/2-prefs.rightOffset;
+  const available=(frame.getBoundingClientRect().right-Math.max(resources.getBoundingClientRect().right,resources.querySelector('.bg3-class-resources')?.getBoundingClientRect().right??0))/scale-24-oldExpansion/2-prefs.rightOffset;
   const capacity=Math.max(1,Math.floor((available+4)/(prefs.iconSize+4)));
   const count=mode==='one'?capacity:mode==='two'?capacity*2:mode==='overflow'?capacity*2+3:4;
   const data=Array.from({length:count},(_,i)=>({name:`BG3 effect ${String(i+1).padStart(2,'0')}`,img:`modules/${ID}/assets/${['dash','disengage','hide','shove','grapple','swords'][i%6]}.svg`,description:`<p>Test effect ${i+1}: this description explains the condition and supports <strong>formatted rules text</strong>.</p>`,origin:actor.uuid,transfer:false,start:{time:game.time.worldTime},duration:{value:600,units:'seconds'},flags:{[ID]:{effectFixture:true}}}));

@@ -2,14 +2,17 @@ import {ID,escapeHTML as esc} from './model.js';
 import {EFFECT_SETTINGS,effectGrid,collectEffects,canEditEffect} from './effect-model.js';
 const VAE='visual-active-effects';
 export function registerEffectSettings(refresh){
+  game.settings.register(ID,'effectScale',{name:'Docked effect icon scale (%)',hint:'Scale effect icons on the combat bar. 50% makes the default 50-pixel icons 25 pixels wide. Tooltip text is unchanged.',scope:'client',config:true,type:Number,default:50,range:{min:10,max:200,step:5},requiresReload:false,onChange:refresh});
   game.settings.register(ID,'showEffects',{name:'Show active effects on the bar',scope:'client',config:true,type:Boolean,default:true,requiresReload:false,onChange:refresh});
   for(const [key,setting] of Object.entries(EFFECT_SETTINGS))game.settings.register(ID,`effects.${key}`,{...setting,hint:`${setting.hint} When Visual Active Effects is active, its matching setting is used.`,config:true,requiresReload:false,onChange:refresh});
 }
 export function effectSettings(){
-  return Object.fromEntries(Object.entries(EFFECT_SETTINGS).map(([key,setting])=>{
+  const settings=Object.fromEntries(Object.entries(EFFECT_SETTINGS).map(([key,setting])=>{
     const inherited=game.modules.get(VAE)?.active&&game.settings.settings.has(`${VAE}.${key}`);
     return [key,inherited?game.settings.get(VAE,key):game.settings.get(ID,`effects.${key}`)??setting.default];
   }));
+  settings.iconSize*=(game.settings.get(ID,'effectScale')??50)/100;
+  return settings;
 }
 function duration(effect){
   if(!effect.isTemporary)return 'Passive';
@@ -77,16 +80,17 @@ export class EffectsDock{
   }
   layout(){
     if(!this.element?.isConnected)return;
-    const root=this.root,main=root.querySelector('.bg3-main'),resources=root.querySelector('.bg3-resources');
+    const root=this.root,main=root.querySelector('.bg3-main'),frame=root.querySelector('.bg3-action-frame'),resources=root.querySelector('.bg3-resources');
     root.style.setProperty('--effects-expand','0px');
     const scale=main.getBoundingClientRect().width/main.offsetWidth;
     const resourceRight=Math.max(resources.getBoundingClientRect().right,resources.querySelector('.bg3-class-resources')?.getBoundingClientRect().right??0);
-    const availableRight=(main.getBoundingClientRect().right-resourceRight)/scale-24;
+    const frameRight=frame.getBoundingClientRect().right;
+    const availableRight=(frameRight-resourceRight)/scale-24;
     // Insets cannot consume the minimum one-icon lane or compromise resource spacing.
     const inset=Math.min(this.prefs.rightOffset,Math.max(0,availableRight-this.prefs.iconSize));
     const available=Math.max(this.prefs.iconSize,availableRight-inset);
     const grid=effectGrid(this.entries.length,available,this.prefs.iconSize);
-    this.element.style.right=`${inset}px`;this.element.style.setProperty('--effect-columns',grid.columns);
+    this.element.style.right=`${(main.getBoundingClientRect().right-frameRight)/scale+inset}px`;this.element.style.setProperty('--effect-columns',grid.columns);
     this.element.dataset.rows=grid.rows;root.style.setProperty('--effects-expand',`${grid.expansion}px`);
     this.bar.paintResources();if(!this.bar.resizing)this.bar.applyScale();
     this.updateDurations();

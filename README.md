@@ -69,14 +69,14 @@ When Midi-QOL reaction tracking is enabled for the actor, its reaction counter i
 
 ## Active effects
 
-Active effects appear at the top-right of the bar. Icons fill one row, then a second row; only overflow beyond both rows widens the bar. The resource frame keeps a gap from the icons, including its upper class-resource tier. Removing effects shrinks the bar again.
+Active effects align with the top-right corner of the shared items and controls frame. The default docked scale is 50%, giving 25-pixel icons with proportionate borders and badges. Tooltip text keeps its configured size. Icons fill one row, then a second row; only overflow beyond both rows widens the bar. The resource frame keeps a gap from the icons, including its upper class-resource tier. Removing effects shrinks the bar again.
 
 - Hover for the enriched description, source, remaining duration, and disabled/passive state.
 - Double-click to enable or disable; Ctrl/Command-double-click opens the native effect editor.
 - Right-click to cancel through Foundry's confirmation dialog. GMs can Shift-right-click to cancel immediately.
 - Applicable item enchantments appear alongside actor effects. Suppressed effects and icons set to Never are hidden; Always Show overrides the passive/disabled filters.
 
-Settings include personal visibility, icon size, tooltip font size, vertical gap and right inset, plus world-wide passive/disabled filters and player interaction permission. Changes apply without reloading. Players can only modify effects they own, and the GM can disable player interaction.
+Settings include personal visibility, base icon size, docked icon scale, tooltip font size, vertical gap and right inset, plus world-wide passive/disabled filters and player interaction permission. Changes apply without reloading. Players can only modify effects they own, and the GM can disable player interaction.
 
 Visual Active Effects is optional. When active, its matching settings govern the dock, and its standalone panel is hidden while the combat bar is shown. Switching to macros or hiding the bar restores that panel. Position offsets apply relative to this bar. The `visual-active-effects.createEffectButtons` and `visual-active-effects.prepareActiveEffectContext` hooks support extension buttons and tooltip content.
 

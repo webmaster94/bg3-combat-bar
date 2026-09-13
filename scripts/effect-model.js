@@ -1,8 +1,8 @@
 export const EFFECT_SETTINGS={
-  iconSize:{name:'Effect icon size',hint:'Size of active effect icons.',scope:'client',type:Number,default:50,range:{min:10,max:100,step:1}},
+  iconSize:{name:'Effect icon size',hint:'Base icon size before the docked effect icon scale is applied.',scope:'client',type:Number,default:50,range:{min:10,max:100,step:1}},
   fontSize:{name:'Effect tooltip font size',hint:'Text size in effect tooltips.',scope:'client',type:Number,default:16,range:{min:4,max:50,step:1}},
   topOffset:{name:'Effect panel vertical gap',hint:'Space above the bar, in pixels.',scope:'client',type:Number,default:16,range:{min:0,max:200,step:1}},
-  rightOffset:{name:'Effect panel right inset',hint:'Space from the right edge of the bar, in pixels.',scope:'client',type:Number,default:0,range:{min:0,max:500,step:1}},
+  rightOffset:{name:'Effect panel right inset',hint:'Space from the right corner of the shared items and controls frame, in pixels.',scope:'client',type:Number,default:0,range:{min:0,max:500,step:1}},
   hideDisabled:{name:'Hide disabled effects',hint:'Hide disabled effects unless their icon is set to Always Show.',scope:'world',type:Boolean,default:false},
   hidePassive:{name:'Hide passive effects',hint:'Hide effects without a temporary duration unless their icon is set to Always Show.',scope:'world',type:Boolean,default:true},
   playerClicks:{name:'Allow player effect interaction',hint:'Let owners toggle, configure, and cancel effects from the bar.',scope:'world',type:Boolean,default:true}

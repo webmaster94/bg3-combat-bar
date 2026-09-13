@@ -32,11 +32,13 @@ test('effect controls honor ownership and the GM player-interaction setting',()=
 test('effect settings work standalone and inherit installed VAE preferences',()=>{
   const values=new Map([['bg3-combat-bar.effects.iconSize',42],['visual-active-effects.iconSize',68]]);
   globalThis.game={modules:new Map(),settings:{settings:new Map([['visual-active-effects.iconSize',{}]]),get:(scope,key)=>values.get(`${scope}.${key}`)}};
-  assert.equal(effectSettings().iconSize,42);
+  assert.equal(effectSettings().iconSize,21);
   game.modules.set('visual-active-effects',{active:true});
-  assert.equal(effectSettings().iconSize,68);
+  assert.equal(effectSettings().iconSize,34);
   assert.equal(effectSettings().hidePassive,true);
   game.modules.get('visual-active-effects').active=false;
+  assert.equal(effectSettings().iconSize,21);
+  values.set('bg3-combat-bar.effectScale',100);
   assert.equal(effectSettings().iconSize,42);
   delete globalThis.game;
 });

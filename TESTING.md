@@ -1,3 +1,9 @@
+## 0.1.6 effect size and frame alignment
+
+Local browser measurements verified 25-by-25-pixel effect icons and zero difference between the dock's right edge and the shared items/control frame's right edge. Borders and duration/disabled badges scale with the icons. With the Monk/Wizard resource fixture, twenty-two effects filled two rows without expansion; twenty-five widened the bar by 108.15 pixels while retaining a 24-pixel resource gap and exact right alignment. Returning to seven effects removed expansion.
+
+Twenty-two automated tests and JavaScript syntax checks pass. The existing preference test now also checks docked scaling with standalone and inherited VAE icon sizes, plus the personal scale override.
+
 ## 0.1.5 active effects
 
 Twenty-two automated tests pass, including two-row capacity/expansion, effect filtering and grouping, ownership controls, optional VAE settings precedence, reactions with Midi absent, and reactions with Midi tracking disabled.
