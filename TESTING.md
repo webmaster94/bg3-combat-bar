@@ -1,5 +1,7 @@
 ## 0.1.9 manual activity choices
 
+Published and installed on Forge. Module Management confirms 0.1.9 enabled. In Valyra Zarkannan's existing campaign bar, Chromatic Orb has no pop-out indicator and Command opens all five command choices. No campaign spell was cast and no BG3 errors were reported.
+
 The original selector admitted any activity with canUse=true, including CPR's hidden Chromatic Orb Bounce rider. Regression tests failed on the extra menu and direct-use dispatch before the fix. The selector now respects system rider IDs, CPR hidden identifiers, Midi automation-only flags, and Midi's sole-attack/other-activity pairing. The Item's activities remain untouched for automation. Single manual choices call activity.use directly, and all-hidden items cannot reopen a manual selector.
 
 39 automated tests and syntax checks pass. Local Foundry v14 / D&D5e 5.3.3 / Midi-QOL tests using native documents confirm Chromatic Orb has no menu chevrons and opens its Cast Spell configuration directly; Command retains Approach, Drop, Flee, Grovel, and Halt in its grid. The cast was canceled before consumption. No BG3 errors occurred in the final live run. The fixture uses CPR's rider metadata pattern and attaches references after Foundry assigns embedded activity IDs.
