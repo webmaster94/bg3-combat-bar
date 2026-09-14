@@ -18,6 +18,20 @@ export function visibleSectionOrder(data){
 }
 export function sectionName(id){return {features:'Features',spells:'Spells',items:'Items'}[id]??sectionDefinitions().find(s=>s.id===id)?.name??'Section';}
 
+export async function hideSection(id){
+  const section=sectionDefinitions().find(s=>s.id===id);if(!section)return;
+  const personal=foundry.utils.deepClone(game.user.getFlag(ID,'sections')??{});
+  if(section.shared)personal.hiddenDefaults=[...new Set([...(personal.hiddenDefaults??[]),id])];
+  else personal.custom=normalizeSections(personal.custom).map(s=>s.id===id?{...s,visible:false}:s);
+  await game.user.setFlag(ID,'sections',personal);
+}
+export function editSection(id){
+  const section=sectionDefinitions().find(s=>s.id===id);if(!section)return;
+  const key=section.shared&&game.user.isGM?'defaultSectionsMenu':'customSectionsMenu';
+  const Manager=game.settings.menus.get(`${ID}.${key}`).type;
+  const app=new Manager();app.focusSection=id;return app.render(true);
+}
+
 function managerOptions(shared){
   const defaults=normalizeSections(game.settings.get(ID,'defaultSections'));
   const personal=game.user.getFlag(ID,'sections')??{};
@@ -46,7 +60,7 @@ export function registerSectionSettings(refresh){
   const Dialog=foundry.applications.api.DialogV2;
   class SectionManager extends Dialog{
     constructor(shared,options={}){const config=managerOptions(shared);super({...config,...options});this.bindSections=config.render;}
-    _onRender(context,options){super._onRender(context,options);this.bindSections(null,this);}
+    _onRender(context,options){super._onRender(context,options);this.bindSections(null,this);if(this.focusSection){const row=this.element.querySelector(`[data-section-id="${this.focusSection}"], [data-default-id="${this.focusSection}"]`);row?.scrollIntoView({block:'nearest'});const input=row?.matches('input')?row:row?.querySelector('input');input?.focus();if(input?.type==='text')input.select();}}
   }
   class DefaultSections extends SectionManager{constructor(options={}){super(true,options);}}
   class CustomSections extends SectionManager{constructor(options={}){super(false,options);}}

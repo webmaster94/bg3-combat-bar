@@ -1,3 +1,4 @@
+import {itemState} from './item-state.js';
 import {escapeHTML as esc} from './model.js';
 
 export function usableActivities(item){return Array.from(item?.system?.activities??[]).filter(a=>a.canUse).sort((a,b)=>(a.sort??0)-(b.sort??0));}
@@ -17,7 +18,7 @@ export class ActivityPopover{
     pop.className='bg3-activity-popover';pop.setAttribute('role','dialog');pop.setAttribute('aria-label',`${item.name} activities`);
     const columns=Math.min(6,activities.length),scale=this.bar.root.getBoundingClientRect().width/this.bar.root.offsetWidth;
     pop.style.setProperty('--activity-columns',columns);pop.style.setProperty('--activity-size',`${42*scale}px`);
-    pop.innerHTML=`<header><span>${esc(item.name)}</span><button type="button" data-close-activities aria-label="Close activities">×</button></header><div class="bg3-activity-grid">${activities.map(a=>`<button type="button" class="bg3-slot" data-activity-id="${esc(a.id)}" aria-label="${esc(a.name)}"><img src="${esc(a.img||item.img)}" alt="">${activityUses(a)?`<span class="bg3-uses">${esc(activityUses(a))}</span>`:''}<span class="bg3-cost ${esc(a.activation?.type??'')}"></span></button>`).join('')}</div>`;
+    pop.innerHTML=`<header><span>${esc(item.name)}</span><button type="button" data-close-activities aria-label="Close activities">×</button></header><div class="bg3-activity-grid">${activities.map(a=>{const state=itemState(item,a,ctx.actor);return `<button type="button" class="bg3-slot ${state.unavailable?'is-unavailable':''}" data-activity-id="${esc(a.id)}" aria-label="${esc(a.name)}"><img src="${esc(a.img||item.img)}" alt="">${state.badge?`<span class="bg3-uses">${esc(state.badge)}</span>`:''}<span class="bg3-cost ${esc(a.activation?.type??'')}"></span></button>`;}).join('')}</div>`;
     document.body.append(pop);
     const rect=anchor.getBoundingClientRect(),box=pop.getBoundingClientRect();
     pop.style.left=`${Math.max(8,Math.min(innerWidth-box.width-8,rect.left+rect.width/2-box.width/2))}px`;

@@ -1,3 +1,11 @@
+## 0.1.8 availability and unified pickers
+
+33 automated checks cover unrestricted versus resource-consuming uses, alternative activities, external and granting-item resources, attunement, preparation, depleted stacks, higher-level and Pact slots, shared picker filters, and Tidy section names, alongside the existing layout, resource, effect, and workflow checks. Syntax validation passes.
+
+Local Foundry 14 / D&D5e 5.3.3 / Midi-QOL browser tests used native documents created by `tools/item-tests.js`. Verified unprepared spell and exhausted feature grayscale, native magical-item attunement requirements, a prepared level-1 spell available with only a level-2 slot, a cantrip infinity badge, and quantity 4 above 1/1 uses on a potion. The activity grid shows infinity for its free activity, no infinity for the charge activity, and 0/1 plus a red warning for the exhausted activity.
+
+Custom picker tabs switch the same grouped renderer between inventory, spells, and features. Can Cast removes the unprepared spell while retaining the upcastable spell; feature search retains exhausted-use information. Header pencils open the appropriate native settings dialog. Hiding a shared section changes only personal visibility immediately; restoring it through Custom Sections returns the saved items without reloading. The base section headers have no edit/hide controls.
+
 ## 0.1.7 activity groups and custom sections
 
 Twenty-six automated tests pass. New coverage checks custom-section migration and persistence across another player's layout save, shared staging and personal visibility overrides, mixed entry types, resizing past hidden sections, activity filtering/sorting/uses, and direct native activity invocation.

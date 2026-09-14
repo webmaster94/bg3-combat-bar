@@ -10,7 +10,7 @@ In Foundry's **Install Module** dialog, paste this manifest URL:
 https://github.com/webmaster94/bg3-combat-bar/releases/latest/download/module.json
 ```
 
-Extract `bg3-combat-bar-0.1.4.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
+Extract `bg3-combat-bar-0.1.8.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
 
 The bar appears during combat for the selected owned PC or NPC. If nothing is selected, it follows the owned current combatant or the user's assigned character. The GM-controlled world setting **Show outside combat** allows everyone to prepare their bars before combat. **Bar scale** remains a personal client setting. Both settings apply when saved without a browser reload; changing scale updates the existing bar in place.
 
@@ -67,9 +67,19 @@ Items use `item.use()` and the system activity hooks, allowing Midi-QOL to run i
 
 When Midi-QOL reaction tracking is enabled for the actor, its reaction counter is authoritative. The bar reads that counter, including extra reactions, and uses Midi's API for manual spending and restoring. Reactions prompted by Midi update the bar without spending twice. Without Midi-QOL installed, or with its reaction tracking disabled, the bar maintains its own counter. Reaction activities spend it automatically, clicks spend it manually, and right-click restores it. It refreshes at the start of that actor's next turn, not at the round boundary.
 
+## Item availability and pickers
+
+The bottom badge shows limited uses or **∞** for unrestricted use. Activities that consume another resource or spell slots never receive an infinity badge. Stacked items show their quantity at the top right, separately from per-item uses. Double upward chevrons mark slots that open an activity grid.
+
+Unavailable icons turn gray and fade slightly. Their tooltips explain the reason in red: not prepared, not attuned, depleted uses, depleted quantity, or insufficient resources. A spell stays available if a suitable higher-level or Pact Magic slot remains, regardless of whether upcasting improves its effects. An item with a usable activity stays available even when another activity is depleted. The native system still handles use configuration and final consumption checks, including formula costs.
+
+All assignment and resource pickers share searchable, collapsible groups and activation filters. Inventory adds Equipped and Can Use; spells add Concentration, Prepared, and Can Cast; features add Can Use. Spell groups follow spell level. Inventory and feature groups honor existing Tidy5e custom section names when present, without requiring Tidy5e. Custom-section pickers provide Items, Spells, and Features tabs with the same controls. Sort by name or sheet order.
+
 ## Activity groups and custom sections
 
 Click an item with multiple available activities to open an icon grid immediately above its slot. Choose an activity to run its normal D&D/Midi workflow. The activity-choice dialog is replaced by this grid; normal use, consumption, attack, and damage prompts still work. Each activity has its own tooltip, activation cost, and limited-use badge. Escape, clicking outside, or clicking the parent item again closes the grid. Arrow keys move between activities.
+
+Added section headers have a pencil to open their settings and an eye-slash to hide the section for the current user. The three built-in sections have neither control. For a shared section, the GM pencil opens world defaults; players open their personal visibility settings. Hiding never removes assignments.
 
 In **Game Settings → BG3 Combat Bar**, open **Default Sections** as GM to create shared sections. Turn off **Show** to stage or hide a section. Open **Custom Sections** to create personal sections or hide individual GM defaults for yourself. A default hidden by the GM stays hidden for everyone until the GM shows it again. Both dialogs apply changes immediately when saved, without reloading.
 

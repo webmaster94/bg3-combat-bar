@@ -165,3 +165,26 @@ body.bg3-docked-effects #visual-active-effects{display:none!important}
 .bg3-section-manager [data-section-settings]{max-height:40vh;overflow-y:auto}
 .bg3-section-manager [data-add-section]{width:100%;margin-top:8px}
 .bg3-shared-visibility{margin:6px 0}.bg3-shared-visibility small{opacity:.65}
+
+/* Availability badges remain readable while unavailable art recedes. */
+.bg3-slot.is-unavailable>img,.bg3-picker .is-unavailable>img{filter:grayscale(1);opacity:.45}
+.bg3-quantity{position:absolute;right:1px;top:0;background:#101418dd;color:#fff1ce;padding:1px 3px;font:bold 10px sans-serif;border-radius:0 0 0 3px;text-shadow:0 1px 2px #000}
+.bg3-activity-indicator{top:1px;left:50%;right:auto;transform:translateX(-50%);font-size:11px;line-height:13px;padding:0 2px;background:#101418bc;border-radius:2px;color:#ffe0a0;text-shadow:0 1px 2px #000}
+.bg3-tooltip>.bg3-unavailable-reason{padding:5px 16px 8px}
+.bg3-unavailable-reason{color:#ff8585!important;font-size:.9em}
+.bg3-section-tools{display:flex;gap:5px;margin-left:auto;flex-shrink:0}
+#bg3-combat-bar .bg3-section-tools button{width:14px;height:14px;min-height:0;padding:0;border:0;background:none;color:#b9a579;font-size:10px;line-height:14px}
+#bg3-combat-bar .bg3-section-tools button:hover{color:#ffe4a5}
+.bg3-action-frame .bg3-section>header:not(.bg3-feature-headings){display:flex;align-items:center;gap:6px;overflow:hidden}
+.bg3-section>header>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bg3-picker-tabs,.bg3-picker-filters,.bg3-picker-search{display:flex;gap:5px;align-items:center;margin-bottom:8px}
+.bg3-picker-search input{flex:1;min-width:100px}.bg3-picker-search select{flex:0 0 115px}.bg3-picker-search button{flex:0 0 32px}
+.bg3-picker-tabs button{flex:1}.bg3-picker-filters{flex-wrap:wrap}.bg3-picker-filters button{flex:0 1 auto;padding:4px 9px;min-height:28px}
+.bg3-picker [aria-pressed="true"]{background:var(--color-warm-2,#654550);border-color:var(--color-warm-1,#d99c56);color:var(--color-light-1,#fff)}
+.bg3-picker .bg3-item-list{height:42vh;max-height:42vh;gap:7px}
+.bg3-picker details{border:1px solid var(--color-border-light-2,#675c55);border-radius:4px;overflow:clip;flex-shrink:0}
+.bg3-picker summary{padding:8px 10px;cursor:pointer;background:var(--color-cool-4,#27262e);font-weight:bold}
+.bg3-picker summary small{margin-left:8px!important}
+.bg3-picker .bg3-item-list button{border:0;border-bottom:1px solid var(--color-border-light-2,#675c5533);border-radius:0;width:100%;margin:0;min-height:48px}
+.bg3-picker-name{flex:1;min-width:0}.bg3-picker-name small{display:block;font-size:11px;opacity:1!important;margin:3px 0 0!important}
+.bg3-picker-count{min-width:38px;text-align:right;font-variant-numeric:tabular-nums}.bg3-picker-count small{display:block;font-size:10px}
