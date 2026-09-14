@@ -1,7 +1,8 @@
 import {itemState} from './item-state.js';
 import {escapeHTML as esc} from './model.js';
+import {usableActivities} from './activity-choices.js';
+export {usableActivities} from './activity-choices.js';
 
-export function usableActivities(item){return Array.from(item?.system?.activities??[]).filter(a=>a.canUse).sort((a,b)=>(a.sort??0)-(b.sort??0));}
 export function activityUses(activity){const u=activity.uses,max=Number(u?.max);return max>0?`${u.value??Math.max(0,max-Number(u.spent??0))}/${max}`:'';}
 
 export class ActivityPopover{

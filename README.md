@@ -10,7 +10,7 @@ In Foundry's **Install Module** dialog, paste this manifest URL:
 https://github.com/webmaster94/bg3-combat-bar/releases/latest/download/module.json
 ```
 
-Extract `bg3-combat-bar-0.1.8.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
+Extract `bg3-combat-bar-0.1.9.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
 
 The bar appears during combat for the selected owned PC or NPC. If nothing is selected, it follows the owned current combatant or the user's assigned character. The GM-controlled world setting **Show outside combat** allows everyone to prepare their bars before combat. **Bar scale** remains a personal client setting. Both settings apply when saved without a browser reload; changing scale updates the existing bar in place.
 
@@ -76,6 +76,8 @@ Unavailable icons turn gray and fade slightly. Their tooltips explain the reason
 All assignment and resource pickers share searchable, collapsible groups and activation filters. Inventory adds Equipped and Can Use; spells add Concentration, Prepared, and Can Cast; features add Can Use. Spell groups follow spell level. Inventory and feature groups honor existing Tidy5e custom section names when present, without requiring Tidy5e. Custom-section pickers provide Items, Spells, and Features tabs with the same controls. Sort by name or sheet order.
 
 ## Activity groups and custom sections
+
+With Midi-QOL active, the bar omits system rider activities, CPR hidden activities, and Midi automation-only activities from manual choices. These remain on the item so automation can execute them. A sole manual activity runs directly through its native workflow. Chromatic Orb therefore opens its casting workflow while Command retains its command choices.
 
 Click an item with multiple available activities to open an icon grid immediately above its slot. Choose an activity to run its normal D&D/Midi workflow. The activity-choice dialog is replaced by this grid; normal use, consumption, attack, and damage prompts still work. Each activity has its own tooltip, activation cost, and limited-use badge. Escape, clicking outside, or clicking the parent item again closes the grid. Arrow keys move between activities.
 

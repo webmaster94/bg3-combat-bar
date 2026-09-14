@@ -1,3 +1,9 @@
+## 0.1.9 manual activity choices
+
+The original selector admitted any activity with canUse=true, including CPR's hidden Chromatic Orb Bounce rider. Regression tests failed on the extra menu and direct-use dispatch before the fix. The selector now respects system rider IDs, CPR hidden identifiers, Midi automation-only flags, and Midi's sole-attack/other-activity pairing. The Item's activities remain untouched for automation. Single manual choices call activity.use directly, and all-hidden items cannot reopen a manual selector.
+
+39 automated tests and syntax checks pass. Local Foundry v14 / D&D5e 5.3.3 / Midi-QOL tests using native documents confirm Chromatic Orb has no menu chevrons and opens its Cast Spell configuration directly; Command retains Approach, Drop, Flee, Grovel, and Halt in its grid. The cast was canceled before consumption. No BG3 errors occurred in the final live run. The fixture uses CPR's rider metadata pattern and attaches references after Foundry assigns embedded activity IDs.
+
 ## 0.1.8 availability and unified pickers
 
 Release 0.1.8 was published to GitHub; the downloaded release archive matches the local build hash. Forge installed the release, and Module Management after server restart confirms BG3 Combat Bar 0.1.8 enabled on Foundry 14.364 / D&D5e 5.3.3. No BG3 errors were reported during startup. Detailed item and picker interaction checks below were performed in the local world.

@@ -1,5 +1,6 @@
 // Shared presentation state. Native activity.use remains responsible for consumption.
-export const itemActivities=item=>Array.from(item?.system?.activities??[]).filter(a=>!a.isRider);
+export {displayActivities as itemActivities} from './activity-choices.js';
+import {displayActivities as itemActivities} from './activity-choices.js';
 export function limitedUses(uses){
   const max=Number(uses?.max);if(!(max>0))return null;
   return {max,value:Number(uses.value??Math.max(0,max-Number(uses.spent??0)))};

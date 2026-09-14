@@ -160,11 +160,13 @@ export class CombatBar {
   }
   async useItem(ctx,item,event){
     if(!item)return;
-    if(usableActivities(item).length>1){
+    const activities=usableActivities(item);
+    if(activities.length>1){
       const anchor=event?.currentTarget??this.root?.querySelector(`[data-item="${item.id}"]`);
       if(anchor?.isConnected)return this.activities.open(ctx,item,anchor);
     }
-    return serial(`${ctx.token.uuid}:barUse`,async()=>{this.usingActor=ctx.actor.uuid;try{return await item.use({event});}finally{this.usingActor=null;}});}
+    if(activities.length===1)return this.useActivity(ctx,activities[0],event);
+    return serial(`${ctx.token.uuid}:barUse`,async()=>{this.usingActor=ctx.actor.uuid;try{return await (!activities.length&&Array.from(item.system?.activities??[]).length?item.displayCard():item.use({event}));}finally{this.usingActor=null;}});}
   async useActivity(ctx,activity,event){
     if(!activity.canUse)return ui.notifications.warn('That activity is no longer available.');
     return serial(`${ctx.token.uuid}:barUse`,async()=>{this.usingActor=ctx.actor.uuid;try{return await activity.use({event});}finally{this.usingActor=null;}});
