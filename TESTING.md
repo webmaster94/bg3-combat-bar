@@ -1,3 +1,17 @@
+## 0.1.7 activity groups and custom sections
+
+Twenty-six automated tests pass. New coverage checks custom-section migration and persistence across another player's layout save, shared staging and personal visibility overrides, mixed entry types, resizing past hidden sections, activity filtering/sorting/uses, and direct native activity invocation.
+
+Local Foundry v14 / D&D 5e 5.3.3 with Midi-QOL checks on September 14, 2026:
+
+- Created shared Combat Kit and personal My Favorites through their native settings dialogs. Both appeared on save, with no reload or reload prompt.
+- Hid a GM default personally, restored it, then hid and restored the populated default as GM. Feature and spell assignments returned intact.
+- Assigned a feature, spell, and inventory item through the mixed-type picker. Dragging the inventory item into the personal section moved it and preserved the other entries.
+- Opened the three-activity Versatile Charm grid above its parent slot. Tooltips showed individual flavor, use counts, and costs. Selected Quick Step directly; its native use dialog appeared and consumed exactly one item use and one bonus action, with the pop-out closed afterward.
+- Visually inspected the shared frame with both new sections and the activity grid. No BG3 module errors appeared in local browser logs.
+
+A separate live player client was not used; personal-definition isolation and visibility merging are covered by automated tests. `tools/section-tests.js` creates only marked local fixtures and is excluded from the release ZIP.
+
 ## 0.1.6 effect size and frame alignment
 
 Local browser measurements verified 25-by-25-pixel effect icons and zero difference between the dock's right edge and the shared items/control frame's right edge. Borders and duration/disabled badges scale with the icons. With the Monk/Wizard resource fixture, twenty-two effects filled two rows without expansion; twenty-five widened the bar by 108.15 pixels while retaining a 24-pixel resource gap and exact right alignment. Returning to seven effects removed expansion.

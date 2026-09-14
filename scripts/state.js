@@ -1,8 +1,9 @@
 import {ID, normalizeLayout, turnKey, freshEconomy, spendEconomy} from "./model.js";
+import {sectionDefinitions} from './sections.js';
 const queues = new Map();
 export function storage(actor, token) { return token && !token.actorLink ? token : actor; }
 export function context(token) { return token?.actor ? {actor:token.actor, token, document:storage(token.actor,token)} : null; }
-export function layout(ctx) { return normalizeLayout(ctx.document.getFlag(ID,"layout")); }
+export function layout(ctx) { return normalizeLayout(ctx.document.getFlag(ID,"layout"),sectionDefinitions().map(s=>s.id)); }
 export async function editLayout(ctx, change) {
   return serial(ctx.document.uuid, async () => {
     const data = layout(ctx); await change(data); await ctx.document.setFlag(ID,"layout",data); return data;

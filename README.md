@@ -67,6 +67,16 @@ Items use `item.use()` and the system activity hooks, allowing Midi-QOL to run i
 
 When Midi-QOL reaction tracking is enabled for the actor, its reaction counter is authoritative. The bar reads that counter, including extra reactions, and uses Midi's API for manual spending and restoring. Reactions prompted by Midi update the bar without spending twice. Without Midi-QOL installed, or with its reaction tracking disabled, the bar maintains its own counter. Reaction activities spend it automatically, clicks spend it manually, and right-click restores it. It refreshes at the start of that actor's next turn, not at the round boundary.
 
+## Activity groups and custom sections
+
+Click an item with multiple available activities to open an icon grid immediately above its slot. Choose an activity to run its normal D&D/Midi workflow. The activity-choice dialog is replaced by this grid; normal use, consumption, attack, and damage prompts still work. Each activity has its own tooltip, activation cost, and limited-use badge. Escape, clicking outside, or clicking the parent item again closes the grid. Arrow keys move between activities.
+
+In **Game Settings → BG3 Combat Bar**, open **Default Sections** as GM to create shared sections. Turn off **Show** to stage or hide a section. Open **Custom Sections** to create personal sections or hide individual GM defaults for yourself. A default hidden by the GM stays hidden for everyone until the GM shows it again. Both dialogs apply changes immediately when saved, without reloading.
+
+New sections accept features, spells, weapons, and inventory items together. Use the usual slot picker or drag and drop. They support the same ten pages, row controls, locking, section rearrangement, and smooth divider resizing as the built-in sections. Hidden sections retain their assigned items and widths.
+
+Shared definitions are world settings; personal definitions and visibility overrides are saved on the Foundry user. Slot assignments remain on each linked actor or unlinked token, with distinct section IDs so players' personal sections do not overwrite one another. Layout version 3 preserves existing pages and loadouts during migration.
+
 ## Active effects
 
 Active effects align with the top-right corner of the shared items and controls frame. The default docked scale is 50%, giving 25-pixel icons with proportionate borders and badges. Tooltip text keeps its configured size. Icons fill one row, then a second row; only overflow beyond both rows widens the bar. The resource frame keeps a gap from the icons, including its upper class-resource tier. Removing effects shrinks the bar again.

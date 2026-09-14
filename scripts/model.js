@@ -13,21 +13,24 @@ export const GENERICS = {
 };
 export const clone = value => structuredClone(value);
 export const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-export function newPage() { return Object.fromEntries(Object.entries(SECTIONS).map(([key, n]) => [key, Array(n).fill(null)])); }
-export function defaultLayout() {
-  return { version: 2, locked: false, page: 0, pages: Array.from({length:PAGE_COUNT},newPage), rows:2,
-    order: ["weapons",...Object.keys(SECTIONS)], widths: {...DEFAULT_WIDTHS},
+export const isCustomSection = key => typeof key==='string' && /^custom-[a-zA-Z0-9_-]+$/.test(key);
+export function newPage(customIds=[]) { return Object.fromEntries([...Object.keys(SECTIONS),...customIds.filter(isCustomSection)].map(key => [key, Array(72).fill(null)])); }
+export function defaultLayout(customIds=[]) {
+  return { version: 3, locked: false, page: 0, pages: Array.from({length:PAGE_COUNT},()=>newPage(customIds)), rows:2,
+    order: ["weapons",...Object.keys(SECTIONS),...customIds], widths: {...DEFAULT_WIDTHS,...Object.fromEntries(customIds.map(id=>[id,174]))},
     weapons: { melee: [[null,null],[null,null]], ranged: [[null,null],[null,null]] },
     weaponTab: "melee", weaponSet: {melee:0,ranged:0}, activeLoadout: null, resources: [], offset: {x:0,y:0} };
 }
-export function normalizeLayout(saved) {
-  const base = defaultLayout();
-  if (!saved || ![1,2].includes(saved.version)) return base;
-  const legacy=saved.version===1,result={...base,...clone(saved),version:2};
-  const migratePage=p=>Object.fromEntries(Object.entries(SECTIONS).map(([key,n])=>{
+export function normalizeLayout(saved,customIds=[]) {
+  const extras=[...new Set([...customIds,...Object.keys(saved?.widths??{}),...(Array.isArray(saved?.order)?saved.order:[]),...(Array.isArray(saved?.pages)?saved.pages:[]).flatMap(p=>Object.keys(p??{}))])].filter(isCustomSection);
+  const base = defaultLayout(extras),keys=[...Object.keys(SECTIONS),...extras];
+  if (!saved || ![1,2,3].includes(saved.version)) return base;
+  const legacy=saved.version===1,result={...base,...clone(saved),version:3};
+  const migratePage=p=>Object.fromEntries(keys.map(key=>{
+    const n=72;
     const slots=Array(n).fill(null),oldColumns=key==='items'?4:6;
-    for(const [i,id] of (p?.[key]??[]).entries()){
-      const index=legacy?Math.floor(i/oldColumns)*SECTION_COLUMNS+i%oldColumns:i;
+    for(const [i,id] of (Array.isArray(p?.[key])?p[key]:[]).entries()){
+      const index=legacy&&!isCustomSection(key)?Math.floor(i/oldColumns)*SECTION_COLUMNS+i%oldColumns:i;
       if(index<n&&typeof id==='string')slots[index]=id;
     }
     return [key,slots];
@@ -37,12 +40,12 @@ export function normalizeLayout(saved) {
   if(saved.pages?.length>PAGE_COUNT)result.archivedPages=[...(saved.archivedPages??[]),...saved.pages.slice(PAGE_COUNT).map(migratePage)];
   result.page=Math.max(0,Math.min(PAGE_COUNT-1,Math.trunc(Number(saved.page)||0)));
   result.rows=Math.max(2,Math.min(MAX_ROWS,Math.trunc(Number(saved.rows)||2)));
-  result.widths=Object.fromEntries(Object.keys(SECTIONS).map(key=>{
+  result.widths=Object.fromEntries(keys.map(key=>{
     const old=Number(saved.widths?.[key]);
-    const width=old>0?(legacy?old/2*44-2:old):DEFAULT_WIDTHS[key];
+    const width=old>0?(legacy?old/2*44-2:old):(DEFAULT_WIDTHS[key]??174);
     return [key,Math.max(42,Math.min(SECTION_COLUMNS*44-2,width))];
   }));
-  result.order=[...new Set([...(saved.order??[]).filter(k=>k==='weapons'||k in SECTIONS),'weapons',...Object.keys(SECTIONS)])];
+  result.order=[...new Set([...(Array.isArray(saved.order)?saved.order:[]).filter(k=>k==='weapons'||keys.includes(k)),'weapons',...keys])];
   result.weapons={};
   for(const type of ['melee','ranged'])result.weapons[type]=Array.from({length:2},(_,i)=>Array.from({length:2},(_,j)=>saved.weapons?.[type]?.[i]?.[j]??null));
   return result;
@@ -57,6 +60,7 @@ export function resizeSections(widths,order,key,delta) {
 }
 export function matchesItem(item, section, hand=0) {
   if (!item) return false;
+  if (isCustomSection(section)) return ['weapon','feat','spell','consumable','equipment','tool','loot','container'].includes(item.type);
   if (section === "features") return item.type === "feat";
   if (section === "spells") return item.type === "spell";
   if (section === "items") return ["consumable","equipment","tool","loot","container"].includes(item.type);

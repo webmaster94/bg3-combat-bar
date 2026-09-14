@@ -13,7 +13,7 @@ test('concurrent edits serialize without losing either slot assignment',async()=
 test('legacy assignments keep their row and column when migrated to ten pages',()=>{
   const legacy={version:1,pages:[{features:['first',null,null,null,null,'edge','second row']}],widths:{features:8}};
   const d=normalizeLayout(legacy);
-  assert.equal(d.version,2);assert.equal(d.pages.length,10);assert.equal(d.rows,2);
+  assert.equal(d.version,3);assert.equal(d.pages.length,10);assert.equal(d.rows,2);
   assert.equal(d.widths.features,174);assert.equal(d.pages[0].features[0],'first');
   assert.equal(d.pages[0].features[5],'edge');assert.equal(d.pages[0].features[12],'second row');
   assert.equal(d.pages[0].features[6],null);assert.deepEqual(normalizeLayout(d),d);
