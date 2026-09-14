@@ -1,5 +1,7 @@
 ## 0.1.8 availability and unified pickers
 
+Release 0.1.8 was published to GitHub; the downloaded release archive matches the local build hash. Forge installed the release, and Module Management after server restart confirms BG3 Combat Bar 0.1.8 enabled on Foundry 14.364 / D&D5e 5.3.3. No BG3 errors were reported during startup. Detailed item and picker interaction checks below were performed in the local world.
+
 33 automated checks cover unrestricted versus resource-consuming uses, alternative activities, external and granting-item resources, attunement, preparation, depleted stacks, higher-level and Pact slots, shared picker filters, and Tidy section names, alongside the existing layout, resource, effect, and workflow checks. Syntax validation passes.
 
 Local Foundry 14 / D&D5e 5.3.3 / Midi-QOL browser tests used native documents created by `tools/item-tests.js`. Verified unprepared spell and exhausted feature grayscale, native magical-item attunement requirements, a prepared level-1 spell available with only a level-2 slot, a cantrip infinity badge, and quantity 4 above 1/1 uses on a potion. The activity grid shows infinity for its free activity, no infinity for the charge activity, and 0/1 plus a red warning for the exhausted activity.
