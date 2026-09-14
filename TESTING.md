@@ -10,6 +10,8 @@ Local Foundry v14 / D&D 5e 5.3.3 with Midi-QOL checks on September 14, 2026:
 - Opened the three-activity Versatile Charm grid above its parent slot. Tooltips showed individual flavor, use counts, and costs. Selected Quick Step directly; its native use dialog appeared and consumed exactly one item use and one bonus action, with the pop-out closed afterward.
 - Visually inspected the shared frame with both new sections and the activity grid. No BG3 module errors appeared in local browser logs.
 
+Forge campaign confirmation: installed and enabled 0.1.7 on Foundry 14.364 / D&D 5e 5.3.3. Both section settings dialogs opened. Bardic Inspiration displayed its two available activities in a grid above its existing slot, without using the item. No BG3 errors appeared in browser logs.
+
 A separate live player client was not used; personal-definition isolation and visibility merging are covered by automated tests. `tools/section-tests.js` creates only marked local fixtures and is excluded from the release ZIP.
 
 ## 0.1.6 effect size and frame alignment
