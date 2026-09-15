@@ -1,6 +1,8 @@
 ## 0.1.10 Foundry v13 compatibility
 
-Tested Foundry 13.351 with D&D5e 5.3.3, without Midi-QOL, in an isolated copy of the local v13 test world on port 30004. Existing campaigns and their installed system were not modified. The module can be enabled through native Module Management.
+Published to GitHub; the public ZIP hash matches the local build. Forge installation and campaign Module Management confirm 0.1.10 enabled on the existing v14 campaign. No BG3 errors were reported during the final campaign check.
+
+Tested Foundry 13.351 with D&D5e 5.3.3, without Midi-QOL, in an isolated copy of the local v13 test world on port 30004. Existing campaigns and their installed system were not modified. The module can be enabled through native Module Management. The isolated server was then restarted on supported Node 22.23.2, and all three native effect compatibility checks passed again.
 
 All nine `tools/live-tests.js` checks passed: weapon equipping, Active Effect Hide cost override, Dash movement and turn refresh, invalid shove rejection, successful shove movement, grapple application and reach cleanup, unlinked-token layout isolation, enriched item tooltip, and native spell/action consumption.
 
