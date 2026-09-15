@@ -1,3 +1,15 @@
+## 0.1.10 Foundry v13 compatibility
+
+Tested Foundry 13.351 with D&D5e 5.3.3, without Midi-QOL, in an isolated copy of the local v13 test world on port 30004. Existing campaigns and their installed system were not modified. The module can be enabled through native Module Management.
+
+All nine `tools/live-tests.js` checks passed: weapon equipping, Active Effect Hide cost override, Dash movement and turn refresh, invalid shove rejection, successful shove movement, grapple application and reach cleanup, unlinked-token layout isolation, enriched item tooltip, and native spell/action consumption.
+
+All four `tools/resource-tests.js` cases passed detection, native point consumption, and native rest recovery: Monk/Wizard, Monk, Sorcerer, and a noncaster with Metamagic Adept. Standalone reaction spend/restore passed. The item fixture confirmed preparation, higher-level slot availability, infinity, quantity plus uses, attunement warnings, and exhaustion. The activity pop-out and grouped spell picker rendered and opened correctly. Macro-bar switching worked in both directions.
+
+`tools/compatibility-tests.js` checks both Active Effect schemas using native documents. On v13, temporary effect filtering, expiration, disable/enable, and deletion passed. The actual tooltip displayed an enriched description and remaining seconds; right-click opened the native deletion dialog and confirmed cancellation removed the icon. The v14-only icon visibility constants are optional, and v13 expiration is derived from remaining duration. Two regression tests cover these differences. All 41 automated checks and syntax validation pass.
+
+The existing local v14.360 / D&D5e 5.3.3 / Midi-QOL world was reloaded with the changes. Its effect dock retained temporary, disabled, Always Show, and item-enchantment entries, and the enriched duration tooltip rendered correctly. No BG3 errors appeared.
+
 ## 0.1.9 manual activity choices
 
 Published and installed on Forge. Module Management confirms 0.1.9 enabled. In Valyra Zarkannan's existing campaign bar, Chromatic Orb has no pop-out indicator and Command opens all five command choices. No campaign spell was cast and no BG3 errors were reported.

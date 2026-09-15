@@ -1,5 +1,5 @@
 import {ID,escapeHTML as esc} from './model.js';
-import {EFFECT_SETTINGS,effectGrid,collectEffects,canEditEffect} from './effect-model.js';
+import {EFFECT_SETTINGS,effectGrid,collectEffects,canEditEffect,effectExpired} from './effect-model.js';
 const VAE='visual-active-effects';
 export function registerEffectSettings(refresh){
   game.settings.register(ID,'effectScale',{name:'Docked effect icon scale (%)',hint:'Scale effect icons on the combat bar. 50% makes the default 50-pixel icons 25 pixels wide. Tooltip text is unchanged.',scope:'client',config:true,type:Number,default:50,range:{min:10,max:200,step:5},requiresReload:false,onChange:refresh});
@@ -16,7 +16,7 @@ export function effectSettings(){
 }
 function duration(effect){
   if(!effect.isTemporary)return 'Passive';
-  if(effect.duration?.expired)return 'Expired';
+  if(effectExpired(effect))return 'Expired';
   if(effect.duration?.remaining===Infinity)return 'Unlimited';
   return effect.duration?.label||'Unlimited';
 }
@@ -27,7 +27,7 @@ async function prepare(entry){
   let rollData={};
   try{let origin=effect.origin?fromUuidSync(effect.origin):null;if(origin?.documentName==='ActiveEffect')origin=origin.parent;if(origin?.inCompendium)origin=effect.parent;rollData=origin?.getRollData?.()??effect.parent?.getRollData?.()??{};}catch{}
   const intro=effect.description?await foundry.applications.ux.TextEditor.implementation.enrichHTML(effect.description,{async:true,relativeTo:effect,rollData,secrets:effect.isOwner}):'';
-  const context={effect,strings:{intro,content:''},buttons,durationLabel:effect.isTemporary?duration(effect):'',hasText:!!intro,isExpired:!!effect.duration?.expired,isInfinite:effect.duration?.remaining===Infinity};
+  const context={effect,strings:{intro,content:''},buttons,durationLabel:effect.isTemporary?duration(effect):'',hasText:!!intro,isExpired:effectExpired(effect),isInfinite:effect.duration?.remaining===Infinity};
   if(Hooks.call(`${VAE}.prepareActiveEffectContext`,effect,context)===false)return null;
   context.buttons=context.buttons.filter(b=>typeof b.label==='string'&&typeof b.callback==='function');
   return {...entry,context};
@@ -43,7 +43,7 @@ export class EffectsDock{
     if(!this.entries.length)return;
     const dock=this.element=document.createElement('div');dock.className='bg3-effects-dock';dock.setAttribute('role','group');dock.setAttribute('aria-label','Active effects');
     dock.style.setProperty('--effect-size',`${this.prefs.iconSize}px`);dock.style.setProperty('--effect-top',`${this.prefs.topOffset}px`);
-    dock.innerHTML=this.entries.map(({effect,itemEffect},i)=>`<button class="bg3-effect ${effect.disabled?'is-disabled':''} ${itemEffect?'is-item-effect':''}" data-effect="${i}" aria-label="${esc(effect.name)}${effect.disabled?' (disabled)':''}"><span class="bg3-effect-image" aria-hidden="true"></span>${effect.isTemporary?`<i class="bg3-effect-clock fa-solid fa-clock ${effect.duration?.expired?'expired':''}" aria-hidden="true"></i>`:''}${effect.disabled?'<i class="bg3-effect-disabled fa-solid fa-ban" aria-hidden="true"></i>':''}</button>`).join('');
+    dock.innerHTML=this.entries.map(({effect,itemEffect},i)=>`<button class="bg3-effect ${effect.disabled?'is-disabled':''} ${itemEffect?'is-item-effect':''}" data-effect="${i}" aria-label="${esc(effect.name)}${effect.disabled?' (disabled)':''}"><span class="bg3-effect-image" aria-hidden="true"></span>${effect.isTemporary?`<i class="bg3-effect-clock fa-solid fa-clock ${effectExpired(effect)?'expired':''}" aria-hidden="true"></i>`:''}${effect.disabled?'<i class="bg3-effect-disabled fa-solid fa-ban" aria-hidden="true"></i>':''}</button>`).join('');
     this.root.querySelector('.bg3-main').append(dock);
     const run=fn=>async event=>{try{await fn(event);}catch(error){console.error(`${ID} | effects`,error);ui.notifications.error(error.message);}};
     dock.querySelectorAll('[data-effect]').forEach(button=>{
@@ -73,7 +73,7 @@ export class EffectsDock{
   updateDurations(){
     for(const [i,{effect}] of this.entries.entries()){
       effect.updateDuration?.();
-      this.element?.querySelector(`[data-effect="${i}"] .bg3-effect-clock`)?.classList.toggle('expired',!!effect.duration?.expired);
+      this.element?.querySelector(`[data-effect="${i}"] .bg3-effect-clock`)?.classList.toggle('expired',effectExpired(effect));
       const badge=this.element?.querySelector(`[data-effect="${i}"] .bg3-effect-clock`);if(badge){const infinite=effect.duration?.remaining===Infinity;badge.classList.toggle('fa-infinity',infinite);badge.classList.toggle('fa-clock',!infinite);}
       const label=this.bar.tooltip?.querySelector('[data-effect-duration]');if(label?.dataset.effectDuration===effect.uuid)label.textContent=duration(effect);
     }

@@ -14,12 +14,18 @@ export function effectGrid(count,available,iconSize,gap=4){
   const width=columns*(iconSize+gap)-gap;
   return {columns,rows:count<=capacity?1:2,width,expansion:count>capacity*2?Math.max(0,2*(width-available)):0};
 }
-export function collectEffects(actor,prefs,showIcon){
+export function effectExpired(effect){
+  if(typeof effect.duration?.expired==='boolean')return effect.duration.expired;
+  // v13 exposes a remaining duration, but no expired property.
+  return !!effect.isTemporary&&Number.isFinite(effect.duration?.remaining)&&effect.duration.remaining<=0;
+}
+export function collectEffects(actor,prefs,showIcon={}){
   const seen=new Set(),groups=[[],[],[],[],[]];
   const add=(effect,itemEffect=false)=>{
     if(seen.has(effect.uuid))return;seen.add(effect.uuid);
-    if(effect.isSuppressed||effect.showIcon===showIcon.NEVER)return;
-    if(effect.showIcon!==showIcon.ALWAYS&&((prefs.hideDisabled&&effect.disabled)||(prefs.hidePassive&&!effect.isTemporary)))return;
+    if(effect.isSuppressed||(showIcon.NEVER!==undefined&&effect.showIcon===showIcon.NEVER))return;
+    const always=showIcon.ALWAYS!==undefined&&effect.showIcon===showIcon.ALWAYS;
+    if(!always&&((prefs.hideDisabled&&effect.disabled)||(prefs.hidePassive&&!effect.isTemporary)))return;
     const group=itemEffect?(effect.disabled?4:3):effect.disabled?2:effect.isTemporary?0:1;
     groups[group].push({effect,itemEffect});
   };

@@ -1,6 +1,6 @@
 # BG3 Combat Bar
 
-A combat interface inspired by Baldur's Gate 3 for Foundry VTT 14 and D&D 5e 5.3.3. The frames and common-action icons are original artwork. This module does not require Argon.
+A combat interface inspired by Baldur's Gate 3 for Foundry VTT 13.351 or 14 and D&D 5e 5.3.3. The frames and common-action icons are original artwork. This module does not require Argon.
 
 ## Installation
 
@@ -10,9 +10,11 @@ In Foundry's **Install Module** dialog, paste this manifest URL:
 https://github.com/webmaster94/bg3-combat-bar/releases/latest/download/module.json
 ```
 
-Extract `bg3-combat-bar-0.1.9.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
+Extract `bg3-combat-bar-0.1.10.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
 
 The bar appears during combat for the selected owned PC or NPC. If nothing is selected, it follows the owned current combatant or the user's assigned character. The GM-controlled world setting **Show outside combat** allows everyone to prepare their bars before combat. **Bar scale** remains a personal client setting. Both settings apply when saved without a browser reload; changing scale updates the existing bar in place.
+
+For Foundry v13, use D&D5e **5.3.3**, the latest system release supported by v13 as of September 14, 2026. D&D5e 6 requires Foundry v14. The same module ZIP supports both Foundry generations. See [the official system compatibility list](https://foundryvtt.com/packages/dnd5e).
 
 ## Controls
 
@@ -96,7 +98,7 @@ Active effects align with the top-right corner of the shared items and controls 
 - Hover for the enriched description, source, remaining duration, and disabled/passive state.
 - Double-click to enable or disable; Ctrl/Command-double-click opens the native effect editor.
 - Right-click to cancel through Foundry's confirmation dialog. GMs can Shift-right-click to cancel immediately.
-- Applicable item enchantments appear alongside actor effects. Suppressed effects and icons set to Never are hidden; Always Show overrides the passive/disabled filters.
+- Applicable item enchantments appear alongside actor effects. Suppressed effects are hidden. On v14, Never Show icons are hidden and Always Show overrides the passive/disabled filters. On v13, which has no native icon-visibility field, the passive/disabled filters apply to all effects.
 
 Settings include personal visibility, base icon size, docked icon scale, tooltip font size, vertical gap and right inset, plus world-wide passive/disabled filters and player interaction permission. Changes apply without reloading. Players can only modify effects they own, and the GM can disable player interaction.
 
