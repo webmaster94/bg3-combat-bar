@@ -1,3 +1,17 @@
+## Unreleased: movement refresh filtering, September 20, 2026
+
+Diagnosis input: `movement-diagnosis-2026-09-20/FINDINGS.md`, `bg3-main.js`, and `bg3-bar-source.js`. The unconditional updateToken refresh called setContext and scheduled a full bar rebuild for placement-only updates. The supplied client profile measured roughly 30ms per render and additional Party Dock layout work; this patch does not claim a new measured client timing.
+
+The regression command `node --test tests/refresh.test.js` reproduced 80 render calls for 80 token movement updates before the fix. After the fix, the same sequence produces zero calls. The harness loads the real main.js hooks and CombatBar context/scheduling methods, drains animation frames between updates, and spies on render at the DOM boundary. It uses fake Foundry documents rather than a connected client.
+
+Movement-only updates include position, elevation, rotation, movement history, and region membership, in nested or flattened update form. Mixed updates retain invalidation. Other token edits remain conservatively eligible when they belong to the current token. Actor, item, and effect updates are scoped to the displayed actor, including synthetic actors and their base-actor updates. Selection and current-combat changes still invalidate, as do user assignment/section settings and the public refresh API. Duplicate controlToken refreshes were removed.
+
+Movement effect cleanup remains a separate hook. A regression drives the real grapple cleanup: a move inside reach causes zero renders, a move outside reach deletes the grapple and causes one render through deleteActiveEffect, and subsequent movement causes none.
+
+Eight new hook regressions also cover resources, ownership, item effects, unlinked-token state, actor relinking/replacement, fallback selection, token lifecycle, combat, settings, native activities, and rests. All **49 tests** pass with `npm test`; `npm run check` and `git diff --check` pass.
+
+Work was prepared in an isolated Git worktree. No version bump, release, deployment, connected-client reload, or modification of the installed GM movement macro was performed. Live campaign profiling remains a separate verification step.
+
 ## 0.1.10 Foundry v13 compatibility
 
 Published to GitHub; the public ZIP hash matches the local build. Forge installation and campaign Module Management confirm 0.1.10 enabled on the existing v14 campaign. No BG3 errors were reported during the final campaign check.
