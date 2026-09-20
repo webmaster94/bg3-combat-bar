@@ -10,7 +10,7 @@ In Foundry's **Install Module** dialog, paste this manifest URL:
 https://github.com/webmaster94/bg3-combat-bar/releases/latest/download/module.json
 ```
 
-Extract `bg3-combat-bar-0.1.10.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
+Extract `bg3-combat-bar-0.1.11.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
 
 The bar appears during combat for the selected owned PC or NPC. If nothing is selected, it follows the owned current combatant or the user's assigned character. The GM-controlled world setting **Show outside combat** allows everyone to prepare their bars before combat. **Bar scale** remains a personal client setting. Both settings apply when saved without a browser reload; changing scale updates the existing bar in place.
 

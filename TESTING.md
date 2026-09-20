@@ -1,4 +1,4 @@
-## Unreleased: movement refresh filtering, September 20, 2026
+## 0.1.11 movement refresh filtering, September 20, 2026
 
 Diagnosis input: `movement-diagnosis-2026-09-20/FINDINGS.md`, `bg3-main.js`, and `bg3-bar-source.js`. The unconditional updateToken refresh called setContext and scheduled a full bar rebuild for placement-only updates. The supplied client profile measured roughly 30ms per render and additional Party Dock layout work; this patch does not claim a new measured client timing.
 
@@ -10,7 +10,7 @@ Movement effect cleanup remains a separate hook. A regression drives the real gr
 
 Eight new hook regressions also cover resources, ownership, item effects, unlinked-token state, actor relinking/replacement, fallback selection, token lifecycle, combat, settings, native activities, and rests. All **49 tests** pass with `npm test`; `npm run check` and `git diff --check` pass.
 
-Work was prepared in an isolated Git worktree. No version bump, release, deployment, connected-client reload, or modification of the installed GM movement macro was performed. Live campaign profiling remains a separate verification step.
+Work was prepared in an isolated Git worktree and packaged as 0.1.11 following release authorization. No Forge installation, deployment, connected-client reload, or modification of the installed GM movement macro was performed. Live campaign profiling remains a separate verification step.
 
 ## 0.1.10 Foundry v13 compatibility
 
