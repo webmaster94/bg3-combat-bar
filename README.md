@@ -10,7 +10,7 @@ In Foundry's **Install Module** dialog, paste this manifest URL:
 https://github.com/webmaster94/bg3-combat-bar/releases/latest/download/module.json
 ```
 
-Extract `bg3-combat-bar-0.1.11.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
+Extract `bg3-combat-bar-0.1.12.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
 
 The bar appears during combat for the selected owned PC or NPC. If nothing is selected, it follows the owned current combatant or the user's assigned character. The GM-controlled world setting **Show outside combat** allows everyone to prepare their bars before combat. **Bar scale** remains a personal client setting. Both settings apply when saved without a browser reload; changing scale updates the existing bar in place.
 
@@ -22,7 +22,7 @@ For Foundry v13, use D&D5e **5.3.3**, the latest system release supported by v13
 - Click an assigned slot to use its item through D&D's activity workflow. Right-click an assigned slot to replace or clear it. Alt-click has no separate slot-assignment behavior.
 - The weapon tabs select melee or ranged loadouts. Each has two numbered loadouts with a main-hand and off-hand slot. Assigning a weapon or selecting a numbered loadout equips that loadout and unequips weapons managed by the other loadouts. Off-hand slots also accept shields.
 - Drag assigned icons to exchange slots. Drag section headings to reorder features, spells, and items within their shared frame. Drag the colored right border of a feature, spell, or item section to adjust its visible width smoothly. The neighboring section gives or receives the same space. Slots retain their positions; narrowing the window clips them, including partial slots, without scrolling or wrapping. Widen the section to reveal them again. Escape cancels a resize. The focused border also accepts Left/Right arrows and Home/End. Drag the diamond above the portrait to move the whole bar.
-- The page controls switch between ten pages. The adjacent **Rows + / −** controls reveal between two and six rows, starting at two. Reducing rows hides their assignments until expanded again. Weapons and resources are shared across pages. Locking prevents layout changes while allowing item use, page changes, and weapon switching.
+- The page controls switch between ten pages. The adjacent **Rows + / −** controls reveal between two and six rows, starting at two. Reducing rows hides their assignments until expanded again. Weapons and resources are shared across pages. Locking prevents rearrangement while allowing item use, page changes, weapon switching, and drag-off removal.
 - The grid button beside the lock, below the page and row controls, switches to Foundry's macro bar. **Shift+B** also switches bars. A return button remains above the macro bar.
 - Click the die outside the left edge of the portrait for skills, saving throws, ending Hide, and escaping a grapple. Click the portrait to open the character sheet.
 - Click an action, bonus-action, or reaction resource to mark it spent. Right-click to restore it, for corrections or additional actions granted by another feature. Reactions used through system activities are tracked, and recover at the start of the character's next turn.
@@ -83,13 +83,25 @@ With Midi-QOL active, the bar omits system rider activities, CPR hidden activiti
 
 Click an item with multiple available activities to open an icon grid immediately above its slot. Choose an activity to run its normal D&D/Midi workflow. The activity-choice dialog is replaced by this grid; normal use, consumption, attack, and damage prompts still work. Each activity has its own tooltip, activation cost, and limited-use badge. Escape, clicking outside, or clicking the parent item again closes the grid. Arrow keys move between activities.
 
-Added section headers have a pencil to open their settings and an eye-slash to hide the section for the current user. The three built-in sections have neither control. For a shared section, the GM pencil opens world defaults; players open their personal visibility settings. Hiding never removes assignments.
+Added section headers have a pencil to open their settings and an eye-slash to hide the section on this character. The three built-in sections have neither control. For a shared section, the GM pencil opens world defaults; players open their personal visibility settings. Hiding never removes assignments.
 
-In **Game Settings → BG3 Combat Bar**, open **Default Sections** as GM to create shared sections. Turn off **Show** to stage or hide a section. Open **Custom Sections** to create personal sections or hide individual GM defaults for yourself. A default hidden by the GM stays hidden for everyone until the GM shows it again. Both dialogs apply changes immediately when saved, without reloading.
+In **Game Settings → BG3 Combat Bar**, open **Global Default Sections** as GM to create shared sections for every character. Turn off **Show** to stage or hide a section. Open **Global Custom Sections** to create personal global sections or hide individual GM defaults for yourself. A default hidden by the GM stays hidden for everyone until the GM shows it again. Both dialogs apply changes immediately when saved, without reloading.
 
 New sections accept features, spells, weapons, and inventory items together. Use the usual slot picker or drag and drop. They support the same ten pages, row controls, locking, section rearrangement, and smooth divider resizing as the built-in sections. Hidden sections retain their assigned items and widths.
 
-Shared definitions are world settings; personal definitions and visibility overrides are saved on the Foundry user. Slot assignments remain on each linked actor or unlinked token, with distinct section IDs so players' personal sections do not overwrite one another. Layout version 3 preserves existing pages and loadouts during migration.
+Shared definitions are world settings; personal definitions and visibility overrides are saved on the Foundry user. Character definitions and visibility overrides use `flags.bg3-combat-bar.characterSections` on the linked actor or unlinked token. Slot assignments and named groups remain in its layout flag, with distinct section IDs so players' personal sections do not overwrite one another. Layout version 3 preserves existing pages and loadouts during migration.
+
+## Character preferences and slot groups
+
+Unlock the bar and click the cog under **Preferences**, beside **Rows +**. Add character sections here, or hide global sections for this character. These preferences belong to the linked actor or the individual unlinked token. Existing settings-menu sections remain global. Saving applies immediately without reloading.
+
+Choose **Save & Edit Slots** to organize icons. Assignable slots have red outlines; click to select them in green. Right-click a selected slot for **Group**, **Ungroup**, **Send To…**, **Remove**, or **Clear Selection**. **Finish Editing** returns to normal item use; the checkmark beside the cog does the same.
+
+Groups are rectangular blocks within one section, including empty slots. Select the block, choose Group, type its title, and press Enter. Groups have a turquoise double border and a centered heading. A group starting below the first row inserts room for its title without changing slot positions. Click its pencil while unlocked to rename it; Escape cancels a title edit. Drag any assigned member to move the whole group. In edit mode, dragging a selected icon moves the entire selection, which can span sections.
+
+**Send To…** moves the selected icons and groups to another of the ten pages, keeping their section, row, and column. A replacement dialog lists any icons that would be displaced and requires confirmation. Cancel leaves both pages unchanged. Incoming individual icons can replace a group member without removing that group's title or other members.
+
+Drop an assigned icon outside the bar to remove its assignment, even while locked. A grouped icon removes the whole group; an edit-mode selection removes all selected assignments. **Remove** in the context menu does the same. Character-sheet items are never deleted. Canceling a drag with Escape leaves assignments intact.
 
 ## Active effects
 

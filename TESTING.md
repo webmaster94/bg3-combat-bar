@@ -1,3 +1,21 @@
+## 0.1.12 character sections and slot groups, September 21, 2026
+
+`npm test`: **60 passing tests**, including 11 new group/editor/character-section checks and all eight movement-refresh regressions. `npm run check` and `git diff --check` pass.
+
+The new regressions cover linked-actor and unlinked-token section isolation, per-character global visibility, rectangular selection validation, group persistence, overlapping moves without icon loss, Send To relative positions and collision planning, affirmative/canceled confirmations, retaining a destination group's title when replacing one member, lower-row title spacing, and grouped drag-off removal while locked. Drag cancellation leaves assignments intact; removing assignments does not call sheet-item deletion.
+
+Live validation used isolated copies of the local test world on Foundry **13.351** and **14.360**, both with D&D5e **5.3.3** and without Midi-QOL. Existing campaign clients and Forge were not reloaded or modified.
+
+- Created a character section through Preferences; it appeared immediately after Save & Edit Slots, without reloading. Switching to another character removed that section from view.
+- Selected two icons (red to green), opened the context menu, grouped them, entered a title, and committed it with Enter. Verified the double border and centered title in both Foundry generations.
+- Dragged a grouped pair to the second row; both assignments moved and the row gained title space. Sent the group to page 2; its title and row/column positions were preserved.
+- Sent another icon to that occupied position. The warning named the displaced potion and its Items / row 2 / column 1 location. Closing the warning left both pages unchanged.
+- Locked the bar and dragged a group onto the canvas; both assignments and the group heading disappeared. Other page assignments remained.
+- Verified full-health portraits in both generations: the damage fill has computed height **0px**, and the HP-label background is neutral rather than red.
+- Browser console checks reported no BG3 errors. Foundry reported the test browser's 743px viewport height as below its recommended minimum.
+
+The feature uses existing system item workflows and does not change Midi-QOL automation. No new live Midi-QOL integration run was performed for this release.
+
 ## 0.1.11 movement refresh filtering, September 20, 2026
 
 Diagnosis input: `movement-diagnosis-2026-09-20/FINDINGS.md`, `bg3-main.js`, and `bg3-bar-source.js`. The unconditional updateToken refresh called setContext and scheduled a full bar rebuild for placement-only updates. The supplied client profile measured roughly 30ms per render and additional Party Dock layout work; this patch does not claim a new measured client timing.

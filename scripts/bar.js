@@ -1,3 +1,4 @@
+import {BarEditor} from './editor.js';
 import {itemState} from './item-state.js';
 import {ID,SECTIONS,SECTION_COLUMNS,MAX_ROWS,PAGE_COUNT,resizeSections,isCustomSection,GENERICS,escapeHTML as esc,matchesItem,usesBadge} from "./model.js";
 import {layout,editLayout,economy,actionCost,isTurn,equipLoadout,serial,setEconomy,changeSpellSlots} from "./state.js";
@@ -12,9 +13,9 @@ import {generic,requestGM,clearHidden} from "./actions.js";
 const icon = (name,cls="") => `<img class="bg3-generic-icon ${cls}" src="modules/${ID}/assets/${name}.svg" alt="">`;
 const label = value => game.i18n.localize(value?.label ?? value ?? "");
 export class CombatBar {
-  constructor(){this.ctx=null;this.macroMode=false;this.tooltipGeneration=0;this.busy=false;this.renderQueued=false;this.activities=new ActivityPopover(this);}
+  constructor(){this.ctx=null;this.macroMode=false;this.tooltipGeneration=0;this.busy=false;this.renderQueued=false;this.activities=new ActivityPopover(this);this.editor=new BarEditor(this);}
   schedule(){if(this.resizing||this.renderQueued)return;this.renderQueued=true;requestAnimationFrame(()=>{this.renderQueued=false;if(!this.resizing)this.render();});}
-  setContext(ctx){if(this.ctx?.token?.uuid!==ctx?.token?.uuid){this.cancelResize?.();this.hideTooltip();}this.ctx=ctx;this.schedule();}
+  setContext(ctx){if(this.ctx?.token?.uuid!==ctx?.token?.uuid||this.ctx?.actor?.uuid!==ctx?.actor?.uuid||this.ctx?.document?.uuid!==ctx?.document?.uuid){this.cancelResize?.();this.hideTooltip();this.editor.reset();}this.ctx=ctx;this.schedule();}
   visible(){return this.ctx?.actor?.isOwner && ["character","npc"].includes(this.ctx.actor.type) && (game.combat?.started||game.settings.get(ID,"outsideCombat"));}
   applyScale(){if(this.root?.isConnected)this.root.style.setProperty('--bg3-scale',Math.min(game.settings.get(ID,'scale'),(innerWidth-130)/this.root.offsetWidth));}
   paintResources(){
@@ -24,20 +25,22 @@ export class CombatBar {
     resources.insertAdjacentHTML('afterbegin',resourceFrame(resources.offsetWidth,resources.offsetHeight,tiered?upper.offsetWidth:0,tiered?upper.offsetHeight-2:0));
   }
   render(){
-    this.activities.close();this.root?.remove();this.swap?.remove();this.hideTooltip();
+    this.activities.close();this.editor.closeMenu();this.root?.remove();this.swap?.remove();this.hideTooltip();
     this.effectsDock=null;document.body.classList.remove('bg3-docked-effects');
-    const visible=this.visible();document.body.classList.toggle("bg3-replaces-hotbar",!!visible&&!this.macroMode);
+    const visible=this.visible();if(!visible)this.editor.reset();document.body.classList.toggle("bg3-replaces-hotbar",!!visible&&!this.macroMode);
     if(!visible)return;
     if(this.macroMode){this.swap=document.createElement("button");this.swap.className="bg3-return";this.swap.title="Return to BG3 Combat Bar";this.swap.innerHTML=`${icon("swords")} Combat bar`;this.swap.onclick=()=>{this.macroMode=false;this.render();};document.body.append(this.swap);return;}
     const ctx=this.ctx,data=layout(ctx),actor=ctx.actor,hp=actor.system.attributes.hp,frac=Math.max(0,Math.min(1,(hp.value??0)/(hp.max||1)));
+    this.editor.sync(ctx,data);
     const root=this.root=document.createElement("section");root.id="bg3-combat-bar";root.setAttribute("aria-label",`BG3 Combat Bar: ${actor.name}`);
     root.classList.toggle("is-locked",data.locked);root.style.setProperty("--bg3-scale",game.settings.get(ID,"scale"));
     root.style.setProperty("--rows",data.rows);root.style.setProperty("--offset-x",`${data.offset.x}px`);root.style.setProperty("--offset-y",`${data.offset.y}px`);
     root.innerHTML=`<div class="bg3-main"><div class="bg3-portrait-wrap"><div class="bg3-identity"><button class="bg3-drag-bar" data-command="move" aria-label="Drag combat bar" title="Drag the bar when unlocked">◆</button><span class="bg3-actor-name">${esc(actor.name)}</span></div><button class="bg3-portrait" data-command="sheet" title="Open character sheet" style="--hp:${frac*100}%;--damage:${(1-frac)*100}%"><img src="${esc(actor.img)}" alt="${esc(actor.name)}"><span class="bg3-health-fill"></span><span class="bg3-health">${hp.value??0}<small> / ${hp.max??0}</small></span>${hp.temp>0?`<span class="bg3-temp">+${hp.temp}</span>`:""}</button><button class="bg3-checks" data-command="checks" aria-label="Skills and saving throws" title="Skills and saving throws">${icon("d20")}</button></div>
-      ${this.weapons(ctx,data)}<div class="bg3-action-frame"><div class="bg3-resource-crown"><div class="bg3-resources" data-resource-drop>${this.resources(ctx,data)}</div></div><div class="bg3-sections">${visibleSectionOrder(data).map(section=>this.section(ctx,data,section)).join("")}</div>
-      <nav class="bg3-controls" aria-label="Bar controls"><div class="bg3-control-column"><small>Page</small><button data-command="previous" aria-label="Previous page" title="Previous page">▴</button><span>${data.page+1}/${PAGE_COUNT}</span><button data-command="next" aria-label="Next page" title="Next page">▾</button></div><div class="bg3-control-column"><small>Rows</small><button data-command="moreRows" aria-label="Add row" title="Add row" ${data.rows>=MAX_ROWS||data.locked?'disabled':''}>+</button><span>${data.rows}</span><button data-command="fewerRows" aria-label="Remove row" title="Remove row" ${data.rows<=2||data.locked?'disabled':''}>−</button></div><div class="bg3-control-bottom"><button data-command="lock" aria-label="${data.locked?"Unlock":"Lock"} bar" title="${data.locked?"Unlock":"Lock"} bar"><i class="fa-solid ${data.locked?"fa-lock":"fa-unlock"}"></i></button><button data-command="macros" title="Show Foundry macro bar" aria-label="Show Foundry macro bar">▦</button></div></nav></div>
+      ${this.weapons(ctx,data)}<div class="bg3-action-frame"><div class="bg3-resource-crown"><div class="bg3-resources" data-resource-drop>${this.resources(ctx,data)}</div></div><div class="bg3-sections">${visibleSectionOrder(data,ctx).map(section=>this.section(ctx,data,section)).join("")}</div>
+      <nav class="bg3-controls" aria-label="Bar controls"><div class="bg3-control-column"><small>Page</small><button data-command="previous" aria-label="Previous page" title="Previous page">▴</button><span>${data.page+1}/${PAGE_COUNT}</span><button data-command="next" aria-label="Next page" title="Next page">▾</button></div><div class="bg3-control-column"><small>Rows</small><button data-command="moreRows" aria-label="Add row" title="Add row" ${data.rows>=MAX_ROWS||data.locked?'disabled':''}>+</button><span>${data.rows}</span><button data-command="fewerRows" aria-label="Remove row" title="Remove row" ${data.rows<=2||data.locked?'disabled':''}>−</button></div>${data.locked?'':`<div class="bg3-preferences"><small>Preferences</small><button data-command="preferences" aria-label="Character preferences" title="Character preferences"><i class="fa-solid fa-gear"></i></button>${this.editor.active?'<button data-command="finishEditing" aria-label="Finish editing" title="Finish editing">✓</button>':''}</div>`}<div class="bg3-control-bottom"><button data-command="lock" aria-label="${data.locked?"Unlock":"Lock"} bar" title="${data.locked?"Unlock":"Lock"} bar"><i class="fa-solid ${data.locked?"fa-lock":"fa-unlock"}"></i></button><button data-command="macros" title="Show Foundry macro bar" aria-label="Show Foundry macro bar">▦</button></div></nav></div>
       <button class="bg3-end-turn ${isTurn(ctx)?"is-turn":""}" data-command="endTurn" ${isTurn(ctx)?"":"disabled"} aria-label="End turn">${icon("hourglass")}<small>End turn</small></button><button class="bg3-rest" data-command="rest" title="Short or long rest" aria-label="Rest">${icon("rest")}</button></div>`;
     document.body.append(root);this.paintResources();this.applyScale();this.bind(ctx,data);
+    root.querySelectorAll('[data-section]').forEach(section=>this.editor.decorate(ctx,data,section));this.editor.paint();this.paintResources();this.applyScale();
     this.effectsDock=new EffectsDock(this,ctx);this.effectsDock.render().catch(error=>console.error(`${ID} | effects`,error));
   }
   resources(ctx,data){
@@ -67,28 +70,28 @@ export class CombatBar {
   }
   section(ctx,data,section){
     const width=data.widths[section],slots=data.pages[data.page][section];
-    return `<section class="bg3-section bg3-${section}" data-section="${section}" style="--section-width:${width}px"><header class="${section==='features'?'bg3-feature-headings':''}" draggable="${!data.locked}" data-section-drag="${section}">${section==='features'?'<span>Actions</span><span>Features</span>':`<span>${esc(sectionName(section))}</span>${isCustomSection(section)?`<span class="bg3-section-tools"><button type="button" data-edit-section="${section}" aria-label="Edit ${esc(sectionName(section))}" title="Edit section settings"><i class="fa-solid fa-pencil" inert></i></button><button type="button" data-hide-section="${section}" aria-label="Hide ${esc(sectionName(section))} for me" title="Hide for me"><i class="fa-solid fa-eye-slash" inert></i></button></span>`:''}`}</header><div class="bg3-section-content">${section==='features'?`<div class="bg3-generics">${Object.entries(GENERICS).map(([id,a])=>`<button class="bg3-slot bg3-generic" data-generic="${id}" aria-label="${a.name}">${icon(id)}<span class="bg3-cost ${actionCost(ctx.actor,id)}"></span></button>`).join('')}</div>`:''}<div class="bg3-viewport"><div class="bg3-grid">${slots.map((id,index)=>this.slot(ctx,id,{section,index,locked:data.locked,offscreen:Math.floor(index/SECTION_COLUMNS)>=data.rows||(index%SECTION_COLUMNS)*44>=width})).join('')}</div></div></div><div class="bg3-section-resize" data-resize="${section}" role="separator" tabindex="${data.locked?-1:0}" aria-label="Resize ${esc(sectionName(section))} section" aria-orientation="vertical" aria-valuemin="42" aria-valuemax="526" aria-valuenow="${width}" title="Drag to resize ${esc(sectionName(section))}"></div></section>`;
+    return `<section class="bg3-section bg3-${section}" data-section="${section}" style="--section-width:${width}px"><header class="${section==='features'?'bg3-feature-headings':''}" draggable="${!data.locked}" data-section-drag="${section}">${section==='features'?'<span>Actions</span><span>Features</span>':`<span>${esc(sectionName(section,ctx))}</span>${isCustomSection(section)?`<span class="bg3-section-tools"><button type="button" data-edit-section="${section}" aria-label="Edit ${esc(sectionName(section,ctx))}" title="Edit section settings"><i class="fa-solid fa-pencil" inert></i></button><button type="button" data-hide-section="${section}" aria-label="Hide ${esc(sectionName(section,ctx))} on this character" title="Hide on this character"><i class="fa-solid fa-eye-slash" inert></i></button></span>`:''}`}</header><div class="bg3-section-content">${section==='features'?`<div class="bg3-generics">${Object.entries(GENERICS).map(([id,a])=>`<button class="bg3-slot bg3-generic" data-generic="${id}" aria-label="${a.name}">${icon(id)}<span class="bg3-cost ${actionCost(ctx.actor,id)}"></span></button>`).join('')}</div>`:''}<div class="bg3-viewport"><div class="bg3-grid">${slots.map((id,index)=>this.slot(ctx,id,{section,index,locked:data.locked,offscreen:Math.floor(index/SECTION_COLUMNS)>=data.rows||(index%SECTION_COLUMNS)*44>=width})).join('')}</div></div></div><div class="bg3-section-resize" data-resize="${section}" role="separator" tabindex="${data.locked?-1:0}" aria-label="Resize ${esc(sectionName(section,ctx))} section" aria-orientation="vertical" aria-valuemin="42" aria-valuemax="526" aria-valuenow="${width}" title="Drag to resize ${esc(sectionName(section,ctx))}"></div></section>`;
   }
   slot(ctx,id,{section,index,loadout,weapon=false,hand=0,offscreen=false,locked=false}){
-    const item=ctx.actor.items.get(id),name=item?.name??(weapon?`${hand?'Off hand':'Main hand'} ${section}`:{features:'Slot a Feature',spells:'Slot a Spell',items:'Slot an Item'}[section]??`Slot into ${sectionName(section)}`);
+    const item=ctx.actor.items.get(id),name=item?.name??(weapon?`${hand?'Off hand':'Main hand'} ${section}`:{features:'Slot a Feature',spells:'Slot a Spell',items:'Slot an Item'}[section]??`Slot into ${sectionName(section,ctx)}`);
     const state=itemState(item,null,ctx.actor),badge=state.badge;
-    return `<div class="bg3-slot-wrap"><button tabindex="${offscreen?-1:0}" class="bg3-slot ${item?'filled':'empty'} ${state.unavailable?'is-unavailable':''}" data-slot="${section}:${index}" data-item="${esc(item?.id??'')}" ${weapon?`data-loadout-index="${loadout}"`:''} draggable="${!!item&&!locked}" ${usableActivities(item).length>1?'aria-haspopup="dialog" aria-expanded="false"':''} aria-label="${esc(name)}">${item?`<img src="${esc(item.img)}" alt="">`:`<span class="bg3-empty-icon">${weapon?(hand?'Ⅱ':'Ⅰ'):'+'}</span>`}${badge?`<span class="bg3-uses">${esc(badge)}</span>`:''}${usableActivities(item).length>1?'<span class="bg3-activity-indicator" aria-hidden="true"><i class="fa-solid fa-angles-up"></i></span>':''}${state.quantity?`<span class="bg3-quantity">${esc(state.quantity)}</span>`:''}${item?.system?.level?`<span class="bg3-level">${item.system.level}</span>`:''}</button></div>`;
+    return `<div class="bg3-slot-wrap"><button tabindex="${offscreen?-1:0}" class="bg3-slot ${item?'filled':'empty'} ${state.unavailable?'is-unavailable':''}" data-slot="${section}:${index}" data-item="${esc(item?.id??'')}" ${weapon?`data-loadout-index="${loadout}"`:''} draggable="${!!item}" ${usableActivities(item).length>1?'aria-haspopup="dialog" aria-expanded="false"':''} aria-label="${esc(name)}">${item?`<img src="${esc(item.img)}" alt="">`:`<span class="bg3-empty-icon">${weapon?(hand?'Ⅱ':'Ⅰ'):'+'}</span>`}${badge?`<span class="bg3-uses">${esc(badge)}</span>`:''}${usableActivities(item).length>1?'<span class="bg3-activity-indicator" aria-hidden="true"><i class="fa-solid fa-angles-up"></i></span>':''}${state.quantity?`<span class="bg3-quantity">${esc(state.quantity)}</span>`:''}${item?.system?.level?`<span class="bg3-level">${item.system.level}</span>`:''}</button></div>`;
   }
   bind(ctx,data){
     const root=this.root;
     const run=fn=>async e=>{try{await fn(e);}catch(error){console.error(`${ID} |`,error);ui.notifications.error(error.message);}};
-    root.querySelectorAll('[data-edit-section]').forEach(b=>b.onclick=run(e=>{e.stopPropagation();return editSection(b.dataset.editSection);}));
-    root.querySelectorAll('[data-hide-section]').forEach(b=>b.onclick=run(e=>{e.stopPropagation();return hideSection(b.dataset.hideSection);}));
+    root.querySelectorAll('[data-edit-section]').forEach(b=>b.onclick=run(e=>{e.stopPropagation();return editSection(b.dataset.editSection,ctx);}));
+    root.querySelectorAll('[data-hide-section]').forEach(b=>b.onclick=run(e=>{e.stopPropagation();return hideSection(b.dataset.hideSection,ctx);}));
     root.querySelectorAll('[data-command]').forEach(b=>b.onclick=run(e=>this.command(b.dataset.command,ctx,data,e)));
     root.querySelectorAll('[data-generic]').forEach(b=>{b.onclick=run(()=>serial(`${ctx.token.uuid}:barUse`,()=>generic(ctx,b.dataset.generic)));this.hover(b,()=>this.genericTooltip(ctx,b.dataset.generic));});
     root.querySelectorAll('[data-slot]').forEach(b=>{
-      b.onclick=run(e=>b.dataset.item?this.useItem(ctx,ctx.actor.items.get(b.dataset.item),e):this.assign(ctx,b));
-      b.oncontextmenu=run(e=>{e.preventDefault();return this.assign(ctx,b);});
+      b.onclick=run(e=>{const [section,index]=b.dataset.slot.split(':');if(this.editor.active&&!['melee','ranged'].includes(section))return this.editor.toggle(ctx,{section,index:Number(index)});return b.dataset.item?this.useItem(ctx,ctx.actor.items.get(b.dataset.item),e):this.assign(ctx,b);});
+      b.oncontextmenu=run(e=>{e.preventDefault();const [section,index]=b.dataset.slot.split(':');if(this.editor.active&&!['melee','ranged'].includes(section))return this.editor.menuAt(ctx,{section,index:Number(index)},e);return this.assign(ctx,b);});
       if(b.dataset.item)this.hover(b,()=>this.itemTooltip(ctx,ctx.actor.items.get(b.dataset.item)));
-      b.ondragstart=e=>{if(data.locked){e.preventDefault();return;}e.dataTransfer.setData('text/plain',JSON.stringify({type:'Item',uuid:ctx.actor.items.get(b.dataset.item)?.uuid,bg3:{owner:ctx.document.uuid,page:data.page,slot:b.dataset.slot,loadout:b.dataset.loadoutIndex}}));this.activities.close();};
+      b.ondragstart=e=>this.editor.startDrag(ctx,b,e);
       b.ondragover=e=>{if(!data.locked){e.preventDefault();b.classList.add('drop-target');}};
       b.ondragleave=()=>b.classList.remove('drop-target');
-      b.ondrop=run(async e=>{e.preventDefault();e.stopPropagation();b.classList.remove('drop-target');if(data.locked)return;let drop;try{drop=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}if(drop.type!=='Item')return;const item=await fromUuid(drop.uuid);if(item?.actor?.uuid!==ctx.actor.uuid)throw new Error("Drag an item from this character's sheet.");await this.assignItem(ctx,b,item.id,drop.bg3);});
+      b.ondrop=run(async e=>{e.preventDefault();e.stopPropagation();b.classList.remove('drop-target');if(await this.editor.drop(ctx,b,e))return;if(data.locked)return;let drop;try{drop=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}if(drop.type!=='Item')return;const item=await fromUuid(drop.uuid);if(item?.actor?.uuid!==ctx.actor.uuid)throw new Error("Drag an item from this character's sheet.");await this.assignItem(ctx,b,item.id,drop.bg3);});
     });
     root.querySelectorAll('[data-weapon-type]').forEach(b=>b.onclick=run(()=>editLayout(ctx,d=>{d.weaponTab=b.dataset.weaponType;})));
     root.querySelectorAll('[data-loadout]').forEach(b=>b.onclick=run(()=>editLayout(ctx,d=>equipLoadout(ctx,d,d.weaponTab,Number(b.dataset.loadout)))));
@@ -111,13 +114,13 @@ export class CombatBar {
       grip.onpointerup=run(async()=>{grip.onpointermove=null;grip.onpointerup=null;await editLayout(ctx,d=>{d.offset=offset;});});
     };
   }
-  async assign(ctx,button){if(layout(ctx).locked)return ui.notifications.info("Unlock the bar to change slots.");const [section,index]=(button.dataset.slot??button.dataset.assign).split(':');this.hideTooltip();const title={features:'Slot a Feature',spells:'Slot a Spell',items:'Slot an Item',melee:'Slot a Melee Weapon',ranged:'Slot a Ranged Weapon'}[section]??`Slot into ${sectionName(section)}`;const id=await pickItem(ctx,title,item=>matchesItem(item,section,Number(index)),{category:isCustomSection(section)?'all':['melee','ranged'].includes(section)?'items':section});if(id===undefined)return;await this.assignItem(ctx,button,id);}
+  async assign(ctx,button){if(layout(ctx).locked)return ui.notifications.info("Unlock the bar to change slots.");const [section,index]=(button.dataset.slot??button.dataset.assign).split(':');this.hideTooltip();const title={features:'Slot a Feature',spells:'Slot a Spell',items:'Slot an Item',melee:'Slot a Melee Weapon',ranged:'Slot a Ranged Weapon'}[section]??`Slot into ${sectionName(section,ctx)}`;const id=await pickItem(ctx,title,item=>matchesItem(item,section,Number(index)),{category:isCustomSection(section)?'all':['melee','ranged'].includes(section)?'items':section});if(id===undefined)return;await this.assignItem(ctx,button,id);}
   bindResize(handle,ctx,data,run){
     const key=handle.dataset.resize;
     handle.onkeydown=run(async e=>{
       if(data.locked||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
       e.preventDefault();e.stopPropagation();
-      await editLayout(ctx,d=>{d.widths=resizeSections(d.widths,visibleSectionOrder(d),key,e.key==='Home'?-1000:e.key==='End'?1000:e.key==='ArrowRight'?8:-8);});
+      await editLayout(ctx,d=>{d.widths=resizeSections(d.widths,visibleSectionOrder(d,ctx),key,e.key==='Home'?-1000:e.key==='End'?1000:e.key==='ArrowRight'?8:-8);});
     });
     handle.onpointerdown=e=>{
       if(data.locked||e.button!==0)return;
@@ -139,7 +142,7 @@ export class CombatBar {
       const cancel=ev=>{if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();run(()=>finish(false))(ev);}};
       this.cancelResize=()=>run(()=>finish(false))({});document.addEventListener('keydown',cancel);
       handle.onpointermove=ev=>{
-        widths=resizeSections(data.widths,visibleSectionOrder(data),key,(ev.clientX-start)/scale);
+        widths=resizeSections(data.widths,visibleSectionOrder(data,ctx),key,(ev.clientX-start)/scale);
         for(const [section,value] of Object.entries(widths)){root.querySelector(`[data-section="${section}"]`)?.style.setProperty('--section-width',`${value}px`);root.querySelector(`[data-resize="${section}"]`)?.setAttribute('aria-valuenow',value);}
         this.paintResources();
         this.effectsDock?.layout();
@@ -172,6 +175,8 @@ export class CombatBar {
     return serial(`${ctx.token.uuid}:barUse`,async()=>{this.usingActor=ctx.actor.uuid;try{return await activity.use({event});}finally{this.usingActor=null;}});
   }
   async command(command,ctx,data,event){
+    if(command==='preferences')return this.editor.preferences(ctx);
+    if(command==='finishEditing'){this.editor.reset();return this.schedule();}
     if(command==='sheet')return ctx.actor.sheet.render(true);
     if(command==='macros'){this.macroMode=true;return this.render();}
     if(command==='checks')return this.checks(ctx);

@@ -19,7 +19,7 @@ body.bg3-replaces-hotbar #hotbar {visibility:hidden!important;pointer-events:non
 #bg3-combat-bar .bg3-portrait{position:absolute;bottom:0;left:0;width:128px;height:138px;padding:7px;border:2px solid #d5b674;border-radius:50%;overflow:hidden;background:repeating-conic-gradient(from 0deg,#413322 0 3deg,#ac8b51 3deg 4deg,#2d281d 4deg 8deg);box-shadow:0 0 0 3px #201c17,0 0 0 5px #9c7c40,inset 0 0 10px #000}
 .bg3-portrait>img{height:100%;width:100%;border:2px solid #21150e;border-radius:50%;object-fit:cover;object-position:50% 25%;filter:brightness(.9)}
 .bg3-health-fill{position:absolute;left:8px;right:8px;bottom:8px;height:calc(var(--damage) * .88);max-height:120px;background:linear-gradient(#b9072888,#700618db);mix-blend-mode:multiply;pointer-events:none;border-radius:0 0 65px 65px;transition:height .35s ease}
-.bg3-health{position:absolute;bottom:8px;left:11px;right:11px;padding:3px 0 8px;background:linear-gradient(transparent,#640b17e6 42%);font-size:18px;text-align:center;text-shadow:0 2px 2px #000;border-radius:0 0 55px 55px;z-index:1}.bg3-health small{font-size:14px}.bg3-temp{position:absolute;top:14px;right:15px;font:12px sans-serif;color:#bdeaff;text-shadow:0 1px 3px #000}
+.bg3-health{position:absolute;bottom:8px;left:11px;right:11px;padding:3px 0 8px;background:linear-gradient(transparent,#101513d9 42%);font-size:18px;text-align:center;text-shadow:0 2px 2px #000;border-radius:0 0 55px 55px;z-index:1}.bg3-health small{font-size:14px}.bg3-temp{position:absolute;top:14px;right:15px;font:12px sans-serif;color:#bdeaff;text-shadow:0 1px 3px #000}
 #bg3-combat-bar .bg3-checks{position:absolute;z-index:2;right:-8px;bottom:40px;height:29px;width:29px;background:radial-gradient(#313936,#121713);border:2px solid #a4864b;border-radius:50%;padding:3px;box-shadow:0 0 0 2px #171812}
 .bg3-generic-icon{width:100%;height:100%;object-fit:contain;border:0;filter:drop-shadow(0 0 3px #c5a25955)}
 .bg3-sections{display:flex;gap:6px;align-items:end;max-width:calc(100vw / var(--bg3-scale) - 460px);overflow-x:auto;scrollbar-width:thin;scrollbar-color:#a4834b #161b1c;padding:1px 8px 2px 6px}
@@ -188,3 +188,27 @@ body.bg3-docked-effects #visual-active-effects{display:none!important}
 .bg3-picker .bg3-item-list button{border:0;border-bottom:1px solid var(--color-border-light-2,#675c5533);border-radius:0;width:100%;margin:0;min-height:48px}
 .bg3-picker-name{flex:1;min-width:0}.bg3-picker-name small{display:block;font-size:11px;opacity:1!important;margin:3px 0 0!important}
 .bg3-picker-count{min-width:38px;text-align:right;font-variant-numeric:tabular-nums}.bg3-picker-count small{display:block;font-size:10px}
+
+/* Character preferences and named slot groups. Group headings reserve their own row space. */
+.bg3-controls:has(.bg3-preferences){grid-template-columns:28px 28px 70px}
+.bg3-preferences{grid-column:3;grid-row:1;display:flex;flex-direction:column;align-items:center;gap:6px;align-self:start}
+.bg3-preferences>small{font-size:8px;line-height:normal;text-transform:uppercase;letter-spacing:.5px;color:#d8c492}
+.bg3-controls:has(.bg3-preferences) .bg3-control-bottom{grid-column:1/3}
+.bg3-grid{position:relative;display:block}
+.bg3-grid>.bg3-slot-wrap{position:absolute}
+.bg3-group-frame{position:absolute;z-index:2;pointer-events:none;border:3px double #78b7bd;box-shadow:inset 0 0 0 1px #15262b,0 0 4px #67aeb155;border-radius:4px 0 4px 0}
+.bg3-group-frame:before,.bg3-group-frame:after{content:'';position:absolute;width:6px;height:6px;border:1px solid #e1cf96;background:#304342;transform:rotate(45deg)}
+.bg3-group-frame:before{left:-3px;top:-3px}.bg3-group-frame:after{right:-3px;bottom:-3px}
+.bg3-group-title{position:absolute;z-index:3;height:20px;display:flex;align-items:center;justify-content:center;gap:3px;color:#acd2d1;font:10px Georgia;white-space:nowrap;text-shadow:0 1px 2px #000}
+.bg3-group-title>span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+#bg3-combat-bar .bg3-group-title button{flex:0 0 13px;width:13px;height:15px;border:0;padding:0;background:none;font-size:9px;color:#c8d2ba}
+#bg3-combat-bar .bg3-group-title input{width:100%;height:19px;min-width:0;padding:1px 3px;border:1px solid #8cbab7;background:#142322;color:#f3ead4;font:11px Georgia;text-align:center}
+#bg3-combat-bar.is-editing .bg3-grid .bg3-slot{border-color:#e57676;outline:1px solid #b94646;outline-offset:-3px;opacity:1}
+#bg3-combat-bar.is-editing .bg3-grid .bg3-slot.is-selected{border-color:#98ecb5;outline-color:#71de99;box-shadow:inset 0 0 12px #4ae08566}
+#bg3-combat-bar.is-editing .bg3-grid .bg3-slot.is-selected:after{content:'✓';position:absolute;left:2px;top:1px;background:#134b33dc;color:#c6ffda;font:bold 11px sans-serif;line-height:14px;width:14px;border-radius:50%}
+.bg3-selection-menu{position:fixed;z-index:10005;min-width:160px;padding:5px;border:1px solid var(--color-border-light-2,#8d784f);border-radius:5px;background:var(--color-cool-5,#171c22);box-shadow:0 6px 20px #0009;color:var(--color-light-1,#eee0bf);display:flex;flex-direction:column;gap:2px}
+.bg3-selection-menu button{width:100%;text-align:left;justify-content:start;border:0;background:transparent;color:inherit;padding:7px 10px;min-height:28px}
+.bg3-selection-menu button:hover,.bg3-selection-menu button:focus-visible{background:var(--color-cool-3,#34413f)}
+.bg3-section-manager [data-character-sections]{max-height:35vh;overflow-y:auto}
+.bg3-section-manager [data-add-character-section]{width:100%;margin-top:8px}
+.bg3-section-manager .bg3-section-setting label,.bg3-section-manager .bg3-shared-visibility{flex-direction:row}
