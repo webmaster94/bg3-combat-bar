@@ -1,3 +1,9 @@
+## 0.1.16 dynamic section-dialog sizing, September 28, 2026
+
+Final campaign validation of 0.1.15 confirmed the checkbox no longer overlapped the trash button, no horizontal overflow remained, and Improved Settings controls were hidden in section rows. It also exposed an existing sizing issue: adding a row left the dialog at its original height and clipped its footer.
+
+Both global and character section editors now recalculate their native ApplicationV2 height after adding or removing rows. Local UI check: adding a row grew the dialog from 432.33px to 472.33px, with Save/Cancel inside the window; removing it restored 432.33px. Test changes were canceled. All 82 automated tests and syntax checks pass.
+
 ## 0.1.15 HUD controls, names, movement, and sight, September 28, 2026
 
 Validation: **82 automated tests** pass; syntax, whitespace, and package build checks pass.

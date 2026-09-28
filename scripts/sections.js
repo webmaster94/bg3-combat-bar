@@ -61,8 +61,8 @@ export function characterPreferences(ctx,{focusSection}={}){
     buttons:[{action:'save',label:'Save Preferences',callback:(_e,b)=>save(b)},{action:'cancel',label:'Cancel'}],
     render:(_e,app)=>{
       const list=app.element.querySelector('[data-character-sections]');
-      const bind=()=>list.querySelectorAll('[data-remove-section]').forEach(b=>b.onclick=()=>b.closest('[data-character-section]').remove());bind();
-      app.element.querySelector('[data-add-character-section]').onclick=()=>{list.insertAdjacentHTML('beforeend',row({id:`custom-character-${foundry.utils.randomID()}`,name:'New Section',visible:true}));bind();list.lastElementChild.querySelector('input').focus();};
+      const bind=()=>list.querySelectorAll('[data-remove-section]').forEach(b=>b.onclick=()=>{b.closest('[data-character-section]').remove();app.setPosition({height:'auto'});});bind();
+      app.element.querySelector('[data-add-character-section]').onclick=()=>{list.insertAdjacentHTML('beforeend',row({id:`custom-character-${foundry.utils.randomID()}`,name:'New Section',visible:true}));bind();app.setPosition({height:'auto'});list.lastElementChild.querySelector('input').focus();};
       if(focusSection)list.querySelector(`[data-character-section="${focusSection}"] input`)?.focus();
     }});
 }
@@ -83,10 +83,10 @@ function managerOptions(shared){
     }},{action:'cancel',label:'Cancel'}],
     render:(_event,app)=>{
       const root=app.element,list=root.querySelector('[data-section-settings]');
-      const bind=()=>list.querySelectorAll('[data-remove-section]').forEach(b=>b.onclick=()=>b.closest('[data-section-id]').remove());
+      const bind=()=>list.querySelectorAll('[data-remove-section]').forEach(b=>b.onclick=()=>{b.closest('[data-section-id]').remove();app.setPosition({height:'auto'});});
       bind();root.querySelector('[data-add-section]').onclick=()=>{
         const id=`custom-${shared?'world':game.user.id}-${foundry.utils.randomID()}`;
-        list.insertAdjacentHTML('beforeend',rowHTML({id,name:'New Section',visible:true}));bind();list.lastElementChild.querySelector('input').focus();
+        list.insertAdjacentHTML('beforeend',rowHTML({id,name:'New Section',visible:true}));bind();app.setPosition({height:'auto'});list.lastElementChild.querySelector('input').focus();
       };
     }};
 }
