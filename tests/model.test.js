@@ -26,5 +26,5 @@ test('section divider preserves fractional widths, neighboring total, and hidden
   assert.equal(n.widths.features,281.25);assert.equal(n.pages[0].features[10],'hidden');
   assert.equal(n.pages[0].features[24],'third row');assert.equal(n.rows,3);
   const limited=resizeSections(d.widths,d.order,'features',10000);
-  assert.equal(limited.spells,42);assert.equal(limited.features+limited.spells,524);
+  assert.equal(limited.spells,0);assert.equal(limited.features,526);
 });

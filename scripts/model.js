@@ -2,6 +2,7 @@ export const ID = "bg3-combat-bar";
 export const PAGE_COUNT = 10;
 export const SECTION_COLUMNS = 12;
 export const MAX_ROWS = 6;
+export const MAX_SECTION_WIDTH = SECTION_COLUMNS*44-2;
 export const SECTIONS = { features: 72, spells: 72, items: 72 };
 export const DEFAULT_WIDTHS = {features:262,spells:262,items:174};
 export const GENERICS = {
@@ -41,9 +42,10 @@ export function normalizeLayout(saved,customIds=[]) {
   result.page=Math.max(0,Math.min(PAGE_COUNT-1,Math.trunc(Number(saved.page)||0)));
   result.rows=Math.max(2,Math.min(MAX_ROWS,Math.trunc(Number(saved.rows)||2)));
   result.widths=Object.fromEntries(keys.map(key=>{
-    const old=Number(saved.widths?.[key]);
-    const width=old>0?(legacy?old/2*44-2:old):(DEFAULT_WIDTHS[key]??174);
-    return [key,Math.max(42,Math.min(SECTION_COLUMNS*44-2,width))];
+    const value=saved.widths?.[key],old=Number(value);
+    const valid=value!==null&&value!==undefined&&Number.isFinite(old)&&old>=0;
+    const width=valid&&(!legacy||old>0)?(legacy?old/2*44-2:old):(DEFAULT_WIDTHS[key]??174);
+    return [key,Math.max(0,Math.min(MAX_SECTION_WIDTH,width))];
   }));
   result.order=[...new Set([...(Array.isArray(saved.order)?saved.order:[]).filter(k=>k==='weapons'||keys.includes(k)),'weapons',...keys])];
   result.weapons={};
@@ -51,11 +53,10 @@ export function normalizeLayout(saved,customIds=[]) {
   return result;
 }
 export function resizeSections(widths,order,key,delta) {
-  const next={...widths},neighbor=order.slice(order.indexOf(key)+1).find(k=>k in widths);
-  const minimum=42,maximum=SECTION_COLUMNS*44-2;
+  const next={...widths},neighbor=order.slice(order.indexOf(key)+1).find(k=>k in widths&&widths[k]>0);
+  const minimum=0,maximum=MAX_SECTION_WIDTH;
   let change=Math.max(minimum-widths[key],Math.min(maximum-widths[key],delta));
-  if(neighbor)change=Math.max(widths[neighbor]-maximum,Math.min(widths[neighbor]-minimum,change));
-  next[key]+=change;if(neighbor)next[neighbor]-=change;
+  next[key]+=change;if(neighbor)next[neighbor]=Math.max(minimum,Math.min(maximum,widths[neighbor]-change));
   return next;
 }
 export function matchesItem(item, section, hand=0) {

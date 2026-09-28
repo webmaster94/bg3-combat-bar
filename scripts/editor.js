@@ -27,7 +27,7 @@ export class BarEditor{
     this.bar.root?.querySelectorAll('[data-slot]').forEach(b=>{const selectable=!['melee','ranged'].includes(b.dataset.slot.split(':')[0]);b.classList.toggle('is-selected',keys.has(b.dataset.slot));b.draggable=!!b.dataset.item||(this.active&&keys.has(b.dataset.slot));if(selectable&&this.active)b.setAttribute('aria-pressed',String(keys.has(b.dataset.slot)));else b.removeAttribute('aria-pressed');});
   }
   decorate(ctx,data,section){
-    const groups=groupsFor(data).filter(g=>g.section===section.dataset.section),geometry=rowGeometry(groups,data.rows),colors=groupColors(groups);
+    const groups=data.widths[section.dataset.section]===0?[]:groupsFor(data).filter(g=>g.section===section.dataset.section),geometry=rowGeometry(groups,data.rows),colors=groupColors(groups);
     const grid=section.querySelector('.bg3-grid'),viewport=section.querySelector('.bg3-viewport');if(!grid)return;
     viewport.style.height=`${geometry.height}px`;grid.style.height=`${geometry.height}px`;
     grid.querySelectorAll('.bg3-slot-wrap').forEach((el,i)=>{el.style.left=`${i%C*44}px`;el.style.top=`${geometry.slotTop(Math.floor(i/C))}px`;});

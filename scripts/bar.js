@@ -1,7 +1,7 @@
 import {TokenControls,tokenName,renameFromBar} from './token-controls.js';
 import {BarEditor} from './editor.js';
 import {itemState} from './item-state.js';
-import {ID,SECTIONS,SECTION_COLUMNS,MAX_ROWS,PAGE_COUNT,resizeSections,isCustomSection,GENERICS,escapeHTML as esc,matchesItem,usesBadge} from "./model.js";
+import {ID,SECTIONS,SECTION_COLUMNS,MAX_ROWS,MAX_SECTION_WIDTH,PAGE_COUNT,resizeSections,isCustomSection,GENERICS,escapeHTML as esc,matchesItem,usesBadge} from "./model.js";
 import {layout,editLayout,economy,actionCost,isTurn,equipLoadout,serial,setEconomy,changeSpellSlots} from "./state.js";
 import {classResources} from "./resources.js";
 import {sectionName,visibleSectionOrder,editSection,hideSection} from './sections.js';
@@ -75,7 +75,7 @@ export class CombatBar {
   }
   section(ctx,data,section){
     const width=data.widths[section],slots=data.pages[data.page][section];
-    return `<section class="bg3-section bg3-${section}" data-section="${section}" style="--section-width:${width}px"><header class="${section==='features'?'bg3-feature-headings':''}" draggable="${!data.locked}" data-section-drag="${section}">${section==='features'?'<span>Actions</span><span>Features</span>':`<span>${esc(sectionName(section,ctx))}</span>${isCustomSection(section)?`<span class="bg3-section-tools"><button type="button" data-edit-section="${section}" aria-label="Edit ${esc(sectionName(section,ctx))}" title="Edit Section Settings"><i class="fa-solid fa-pencil" inert></i></button><button type="button" data-hide-section="${section}" aria-label="Hide ${esc(sectionName(section,ctx))} on this character" title="Hide on This Character"><i class="fa-solid fa-eye-slash" inert></i></button></span>`:''}`}</header><div class="bg3-section-content">${section==='features'?`<div class="bg3-generics">${Object.entries(GENERICS).map(([id,a])=>`<button class="bg3-slot bg3-generic" data-generic="${id}" aria-label="${a.name}">${icon(id)}<span class="bg3-cost ${actionCost(ctx.actor,id)}"></span></button>`).join('')}</div>`:''}<div class="bg3-viewport"><div class="bg3-grid">${slots.map((id,index)=>this.slot(ctx,id,{section,index,locked:data.locked,offscreen:Math.floor(index/SECTION_COLUMNS)>=data.rows||(index%SECTION_COLUMNS)*44>=width})).join('')}</div></div></div><div class="bg3-section-resize" data-resize="${section}" role="separator" tabindex="0" aria-label="Resize ${esc(sectionName(section,ctx))} section" aria-orientation="vertical" aria-valuemin="42" aria-valuemax="526" aria-valuenow="${width}" title="Drag to resize ${esc(sectionName(section,ctx))}"></div></section>`;
+    return `<section class="bg3-section bg3-${section} ${width===0?'is-collapsed':''}" data-section="${section}" style="--section-width:${width}px"><header class="${section==='features'?'bg3-feature-headings':''}" draggable="${!data.locked}" data-section-drag="${section}">${section==='features'?'<span>Actions</span><span>Features</span>':`<span>${esc(sectionName(section,ctx))}</span>${isCustomSection(section)?`<span class="bg3-section-tools"><button type="button" data-edit-section="${section}" aria-label="Edit ${esc(sectionName(section,ctx))}" title="Edit Section Settings"><i class="fa-solid fa-pencil" inert></i></button><button type="button" data-hide-section="${section}" aria-label="Hide ${esc(sectionName(section,ctx))} on this character" title="Hide on This Character"><i class="fa-solid fa-eye-slash" inert></i></button></span>`:''}`}</header><div class="bg3-section-content">${section==='features'?`<div class="bg3-generics">${Object.entries(GENERICS).map(([id,a])=>`<button class="bg3-slot bg3-generic" data-generic="${id}" aria-label="${a.name}">${icon(id)}<span class="bg3-cost ${actionCost(ctx.actor,id)}"></span></button>`).join('')}</div>`:''}<div class="bg3-viewport" ${width===0?'inert':''}><div class="bg3-grid">${slots.map((id,index)=>this.slot(ctx,id,{section,index,locked:data.locked,offscreen:Math.floor(index/SECTION_COLUMNS)>=data.rows||(index%SECTION_COLUMNS)*44>=width})).join('')}</div></div></div><div class="bg3-section-rail"><div class="bg3-rail-controls"><button type="button" data-collapse-section="${section}" aria-label="Collapse ${esc(sectionName(section,ctx))}" title="Collapse ${esc(sectionName(section,ctx))} · Double-Click">◀</button><button type="button" data-expand-section="${section}" aria-label="Expand ${esc(sectionName(section,ctx))}" title="Fully Expand ${esc(sectionName(section,ctx))}">▶</button></div><div class="bg3-section-resize" data-resize="${section}" role="separator" tabindex="0" aria-label="Resize ${esc(sectionName(section,ctx))} Section" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="${MAX_SECTION_WIDTH}" aria-valuenow="${width}" title="Drag to Resize ${esc(sectionName(section,ctx))}"><span class="bg3-collapsed-title">${esc(sectionName(section,ctx))}</span></div></div></section>`;
   }
   slot(ctx,id,{section,index,loadout,weapon=false,hand=0,offscreen=false,locked=false}){
     const item=ctx.actor.items.get(id),name=item?.name??(weapon?`${hand?'Off hand':'Main hand'} ${section}`:{features:'Slot a Feature',spells:'Slot a Spell',items:'Slot an Item'}[section]??`Slot into ${sectionName(section,ctx)}`);
@@ -103,6 +103,8 @@ export class CombatBar {
     });
     root.querySelectorAll('[data-weapon-type]').forEach(b=>b.onclick=run(()=>editLayout(ctx,d=>{d.weaponTab=b.dataset.weaponType;})));
     root.querySelectorAll('[data-loadout]').forEach(b=>b.onclick=run(()=>editLayout(ctx,d=>equipLoadout(ctx,d,d.weaponTab,Number(b.dataset.loadout)))));
+    root.querySelectorAll('[data-collapse-section]').forEach(b=>{b.ondblclick=run(e=>{e.preventDefault();e.stopPropagation();return this.setSectionWidth(ctx,b.dataset.collapseSection,0);});b.onclick=run(e=>{e.stopPropagation();if(e.detail===0)return this.setSectionWidth(ctx,b.dataset.collapseSection,0);});});
+    root.querySelectorAll('[data-expand-section]').forEach(b=>b.onclick=run(e=>{e.stopPropagation();return this.setSectionWidth(ctx,b.dataset.expandSection,MAX_SECTION_WIDTH);}));
     root.querySelectorAll('[data-resize]').forEach(handle=>this.bindResize(handle,ctx,data,run));
     root.querySelectorAll('[data-section-drag]').forEach(h=>h.ondragstart=e=>{if(data.locked)return e.preventDefault();e.dataTransfer.setData('text/plain',JSON.stringify({bg3Section:h.dataset.sectionDrag}));});
     root.querySelectorAll('[data-section]').forEach(s=>{s.ondragover=e=>{if(!data.locked)e.preventDefault();};s.ondrop=run(async e=>{if(data.locked)return;e.preventDefault();let value;try{value=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}if(!data.order.includes(value.bg3Section))return;await editLayout(ctx,d=>{d.order=d.order.filter(k=>k!==value.bg3Section);d.order.splice(d.order.indexOf(s.dataset.section),0,value.bg3Section);});});});
@@ -123,6 +125,9 @@ export class CombatBar {
     };
   }
   async assign(ctx,button){const [section,index]=(button.dataset.slot??button.dataset.assign).split(':');this.hideTooltip();const title={features:'Slot a Feature',spells:'Slot a Spell',items:'Slot an Item',melee:'Slot a Melee Weapon',ranged:'Slot a Ranged Weapon'}[section]??`Slot into ${sectionName(section,ctx)}`;const id=await pickItem(ctx,title,item=>matchesItem(item,section,Number(index)),{category:isCustomSection(section)?'all':['melee','ranged'].includes(section)?'items':section});if(id===undefined)return;await this.assignItem(ctx,button,id);}
+  async setSectionWidth(ctx,key,width){
+    await editLayout(ctx,d=>{if(Object.hasOwn(d.widths,key))d.widths[key]=Math.max(0,Math.min(MAX_SECTION_WIDTH,width));});
+  }
   bindResize(handle,ctx,data,run){
     const key=handle.dataset.resize;
     handle.onkeydown=run(async e=>{
@@ -151,7 +156,7 @@ export class CombatBar {
       this.cancelResize=()=>run(()=>finish(false))({});document.addEventListener('keydown',cancel);
       handle.onpointermove=ev=>{
         widths=resizeSections(data.widths,visibleSectionOrder(data,ctx),key,(ev.clientX-start)/scale);
-        for(const [section,value] of Object.entries(widths)){root.querySelector(`[data-section="${section}"]`)?.style.setProperty('--section-width',`${value}px`);root.querySelector(`[data-resize="${section}"]`)?.setAttribute('aria-valuenow',value);}
+        for(const [section,value] of Object.entries(widths)){const element=root.querySelector(`[data-section="${section}"]`);element?.style.setProperty('--section-width',`${value}px`);element?.classList.toggle('is-collapsed',value===0);const viewport=element?.querySelector('.bg3-viewport');if(viewport)viewport.inert=value===0;root.querySelector(`[data-resize="${section}"]`)?.setAttribute('aria-valuenow',value);}
         this.paintResources();
         this.effectsDock?.layout();
       };

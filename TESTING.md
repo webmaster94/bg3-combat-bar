@@ -1,3 +1,17 @@
+## 0.1.17 collapsible sections, September 28, 2026
+
+Sections now support zero-width grids with compact vertical-label rails below the heading row. Double-click the left arrow to collapse; one click on the right arrow below it fully expands the twelve-column grid. Fixed Actions remain visible when Features is collapsed. Controls and dragging work in Build and Play, and hidden grids are inert.
+
+Five regressions cover persisted zero widths without loss of page/group/resource data, collapsing against a full neighbor, keeping collapsed neighbors closed while resizing, all-section collapse/expansion in Play, and mouse double-click versus single-click/keyboard activation. All **87 tests** pass, including the movement-refresh regressions. Syntax and whitespace checks pass.
+
+Local Foundry 14.360 / D&D5e 5.3.3 UI validation:
+
+- Single-clicking Collapse left width unchanged; double-clicking reduced it to zero.
+- Collapsed Features, Spells, Items, and a custom section together; all four rails stacked compactly with vertical labels, while Actions stayed available. Rails began exactly below the headers.
+- One-click expansion restored Features to 526px, including its two assigned icons and three named groups; neighboring sections remained collapsed.
+- Confirmed collapse in Play and persisted zero widths after a client reload.
+- Dragged an Items rail open to 60px and back to zero; all other sections remained collapsed. No BG3 errors were logged.
+
 ## 0.1.16 dynamic section-dialog sizing, September 28, 2026
 
 Final campaign validation of 0.1.15 confirmed the checkbox no longer overlapped the trash button, no horizontal overflow remained, and Improved Settings controls were hidden in section rows. It also exposed an existing sizing issue: adding a row left the dialog at its original height and clipped its footer.

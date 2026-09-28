@@ -243,3 +243,19 @@ body.bg3-docked-effects #visual-active-effects{display:none!important}
 .bg3-token-menu button[aria-pressed="true"]{background:#344c41;border-color:#c2a364}
 .bg3-token-menu header button{width:22px;height:22px;min-height:0;padding:0;justify-content:center;border:0;background:none;font:20px Arial}
 .bg3-token-menu>small{padding:5px 2px;color:#b9aa87}
+/* Compact rails stay below the headings, and remain usable when their grid is zero-width. */
+.bg3-action-frame .bg3-sections{gap:2px}
+.bg3-action-frame .bg3-section{padding:0 22px 0 2px;min-width:22px;min-height:calc(var(--rows,2)*44px + 16px)}
+.bg3-section-rail{position:absolute;top:18px;bottom:0;right:0;width:18px;display:flex;flex-direction:column;border:1px solid #75603d;background:linear-gradient(90deg,#1e2522,#111a19)}
+.bg3-rail-controls{flex:0 0 27px;display:flex;flex-direction:column;gap:1px;align-items:center;padding:1px 0}
+#bg3-combat-bar .bg3-rail-controls button{width:16px;height:12px;min-height:0;margin:0;padding:0;border:0;background:#27312a;color:#d8c18c;font:9px/12px Georgia;display:block}
+.bg3-action-frame .bg3-section-rail .bg3-section-resize{position:relative;flex:1;width:100%;top:auto;bottom:auto;right:auto;min-height:22px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.bg3-action-frame .bg3-section-rail .bg3-section-resize:before{left:6px;top:2px;bottom:2px;width:4px;border-top:4px solid #b79556;border-bottom:4px solid #b79556}
+.bg3-collapsed-title{display:none;pointer-events:none}
+.bg3-action-frame .bg3-section.is-collapsed:not(.bg3-features){width:22px;padding:0 22px 0 0}
+.bg3-action-frame .bg3-section.is-collapsed:not(.bg3-features)>header{visibility:hidden;width:0;padding:0}
+.bg3-section.is-collapsed .bg3-viewport{visibility:hidden;flex-basis:0;width:0;height:calc(var(--rows,2)*44px - 2px)!important}
+.bg3-section.is-collapsed .bg3-section-tools{display:none}
+.bg3-features.is-collapsed .bg3-feature-headings>span:nth-child(2){visibility:hidden}
+.bg3-section.is-collapsed .bg3-collapsed-title{display:block;writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:100%;padding:3px 0;color:#d9c99e;font:9px Georgia;letter-spacing:.5px;line-height:14px;z-index:1}
+.bg3-action-frame .bg3-section.is-collapsed .bg3-section-resize:before{left:1px;right:1px;top:0;bottom:0;width:auto;opacity:.2;border-top:3px solid #d8bd79;border-bottom:3px solid #d8bd79}
