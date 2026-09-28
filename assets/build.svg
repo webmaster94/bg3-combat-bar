@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs><linearGradient id="gold" x2=".7" y2="1"><stop stop-color="#fff1c9"/><stop offset=".5" stop-color="#dcc38a"/><stop offset="1" stop-color="#8f713f"/></linearGradient></defs>
+  <!-- Original crossed hand saw and claw hammer, matching the bar's gold tools. -->
+  <g stroke="#17201f" stroke-width="2" stroke-linejoin="round" fill="url(#gold)">
+    <path d="M9 5 45 37 37 45 34 40 30 40 30 35 25 35 25 30 20 30 20 25 15 25 15 20 10 20 10 15 6 13Z"/>
+    <path fill-rule="evenodd" d="M45 34 59 44Q62 46 58 51L52 58Q48 62 44 58L34 46ZM45 43 42 47 48 53 53 48Z"/>
+    <path d="m40 16 8 8-31 34q-3 3-6 0l-4-4q-3-3 0-6Z"/>
+    <path d="M30 13 40 3 49 7 45 12 50 17 59 15 55 24 48 28 37 19 34 22 27 16Z"/>
+  </g>
+  <path d="m14 51 26-28" fill="none" stroke="#fff1c9" stroke-width="2" opacity=".7"/>
+</svg>

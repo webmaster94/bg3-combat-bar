@@ -212,3 +212,10 @@ body.bg3-docked-effects #visual-active-effects{display:none!important}
 .bg3-section-manager [data-character-sections]{max-height:35vh;overflow-y:auto}
 .bg3-section-manager [data-add-character-section]{width:100%;margin-top:8px}
 .bg3-section-manager .bg3-section-setting label,.bg3-section-manager .bg3-shared-visibility{flex-direction:row}
+
+/* Play allows quick assignment changes; structural controls belong to Build. */
+.bg3-controls{grid-template-columns:36px 36px}
+.bg3-controls:has(.bg3-preferences){grid-template-columns:36px 36px 70px}
+#bg3-combat-bar .bg3-control-bottom .bg3-mode-toggle{width:43px}
+.bg3-mode-toggle img{width:23px;height:23px}
+#bg3-combat-bar.is-locked .bg3-section-tools{display:none}

@@ -15,8 +15,9 @@ export class BarEditor{
     this.closeMenu();
   }
   async finish(ctx){await editLayout(ctx,d=>{d.locked=true;});this.reset();this.bar.schedule();}
-  preferences(ctx){return characterPreferences(ctx);}
+  preferences(ctx){if(!layout(ctx).locked)return characterPreferences(ctx);}
   toggle(ctx,ref){
+    if(layout(ctx).locked)return;
     const refs=expandGroups(layout(ctx),[ref]),keys=new Set(refs.map(slotKey)),selected=new Set(this.selected.map(slotKey));
     this.selected=refs.every(r=>selected.has(slotKey(r)))?this.selected.filter(r=>!keys.has(slotKey(r))):expandGroups(layout(ctx),[...this.selected,...refs]);
     this.paint();
@@ -49,10 +50,11 @@ export class BarEditor{
   }
   closeMenu(){this.menu?.remove();this.menu=null;this.menuAbort?.abort();}
   menuAt(ctx,ref,event){
+    if(layout(ctx).locked)return;
     event.preventDefault();this.bar.hideTooltip();this.closeMenu();
     if(!this.selected.some(r=>slotKey(r)===slotKey(ref)))this.selected=expandGroups(layout(ctx),[ref]);this.paint();
     const menu=this.menu=document.createElement('div');menu.className='bg3-selection-menu';menu.setAttribute('role','menu');menu.setAttribute('aria-label','Selected slots');
-    menu.innerHTML=[['assign','Assign Item…'],['group','Group'],['ungroup','Ungroup'],['send','Send To…'],['remove','Remove'],['clear','Clear Selection'],['done','Finish Editing']].map(([key,label])=>`<button role="menuitem" data-edit-command="${key}">${label}</button>`).join('');
+    menu.innerHTML=[['assign','Assign Item…'],['group','Group'],['ungroup','Ungroup'],['send','Send To…'],['remove','Remove'],['clear','Clear Selection'],['done','Enter Play Mode']].map(([key,label])=>`<button role="menuitem" data-edit-command="${key}">${label}</button>`).join('');
     document.body.append(menu);const box=menu.getBoundingClientRect();menu.style.left=`${Math.max(0,Math.min(event.clientX,innerWidth-box.width-8))}px`;menu.style.top=`${Math.max(0,Math.min(event.clientY,innerHeight-box.height-8))}px`;
     menu.querySelectorAll('button').forEach(b=>b.onclick=async()=>{const refs=[...this.selected];this.closeMenu();try{await this.command(ctx,b.dataset.editCommand,refs,ref);}catch(e){ui.notifications.warn(e.message);}});
     const abort=this.menuAbort=new AbortController();document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target))this.closeMenu();},{signal:abort.signal});
@@ -79,6 +81,7 @@ export class BarEditor{
   async transfer(ctx,refs,target){
     await editLayout(ctx,async d=>{
       const plan=planTransfer(d,refs,target);
+      if(d.locked&&plan.groups.some(moved=>groupsFor(d,plan.page).some(g=>g.id!==moved.id&&g.section===moved.section&&g.slots.some(i=>moved.slots.includes(i)))))throw Error('Enter Build mode to replace another group.');
       for(const e of plan.entries)if(e.itemId&&!matchesItem(ctx.actor.items.get(e.itemId),e.to.section))throw Error('One or more icons do not fit the destination section.');
       if(plan.collisions.length){
         const names=plan.collisions.map(r=>`<li>${esc(ctx.actor.items.get(r.itemId)?.name??'Missing item')} · ${esc(sectionName(r.section,ctx))}, row ${Math.floor(r.index/C)+1}, column ${r.index%C+1}</li>`).join('');
@@ -111,8 +114,8 @@ export class BarEditor{
   async drop(ctx,button,event){
     const drag=this.drag;if(!drag||drag.ctx.document.uuid!==ctx.document.uuid)return false;
     event.preventDefault();event.stopPropagation();drag.handled=true;
-    if(layout(ctx).locked){this.endDrag();return true;}
     const [section,index]=button.dataset.slot.split(':');
+    if(!drag.weapon&&['melee','ranged'].includes(section)&&(drag.refs.length>1||groupsFor(layout(ctx)).some(g=>g.slots.some(i=>drag.refs.some(r=>r.section===g.section&&r.index===i))))){this.endDrag();throw Error('Move groups within the item, spell, feature, or custom sections.');}
     if(!drag.weapon&&!['melee','ranged'].includes(section)){
       if(layout(ctx).page!==drag.page){this.endDrag();throw Error('The page changed during dragging. Try again.');}
       const grouped=groupsFor(layout(ctx)).some(g=>g.slots.some(i=>drag.refs.some(r=>r.section===g.section&&r.index===i)));

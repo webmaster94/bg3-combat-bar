@@ -35,9 +35,9 @@ export class CombatBar {
     const root=this.root=document.createElement("section");root.id="bg3-combat-bar";root.setAttribute("aria-label",`BG3 Combat Bar: ${actor.name}`);
     root.classList.toggle("is-locked",data.locked);root.style.setProperty("--bg3-scale",game.settings.get(ID,"scale"));
     root.style.setProperty("--rows",data.rows);root.style.setProperty("--offset-x",`${data.offset.x}px`);root.style.setProperty("--offset-y",`${data.offset.y}px`);
-    root.innerHTML=`<div class="bg3-main"><div class="bg3-portrait-wrap"><div class="bg3-identity"><button class="bg3-drag-bar" data-command="move" aria-label="Drag combat bar" title="Drag the bar when unlocked">◆</button><span class="bg3-actor-name">${esc(actor.name)}</span></div><button class="bg3-portrait" data-command="sheet" title="Open character sheet" style="--hp:${frac*100}%;--damage:${(1-frac)*100}%"><img src="${esc(actor.img)}" alt="${esc(actor.name)}"><span class="bg3-health-fill"></span><span class="bg3-health">${hp.value??0}<small> / ${hp.max??0}</small></span>${hp.temp>0?`<span class="bg3-temp">+${hp.temp}</span>`:""}</button><button class="bg3-checks" data-command="checks" aria-label="Skills and saving throws" title="Skills and saving throws">${icon("d20")}</button></div>
+    root.innerHTML=`<div class="bg3-main"><div class="bg3-portrait-wrap"><div class="bg3-identity"><button class="bg3-drag-bar" data-command="move" aria-label="Drag combat bar" title="Drag the bar in Build mode">◆</button><span class="bg3-actor-name">${esc(actor.name)}</span></div><button class="bg3-portrait" data-command="sheet" title="Open character sheet" style="--hp:${frac*100}%;--damage:${(1-frac)*100}%"><img src="${esc(actor.img)}" alt="${esc(actor.name)}"><span class="bg3-health-fill"></span><span class="bg3-health">${hp.value??0}<small> / ${hp.max??0}</small></span>${hp.temp>0?`<span class="bg3-temp">+${hp.temp}</span>`:""}</button><button class="bg3-checks" data-command="checks" aria-label="Skills and saving throws" title="Skills and saving throws">${icon("d20")}</button></div>
       ${this.weapons(ctx,data)}<div class="bg3-action-frame"><div class="bg3-resource-crown"><div class="bg3-resources" data-resource-drop>${this.resources(ctx,data)}</div></div><div class="bg3-sections">${visibleSectionOrder(data,ctx).map(section=>this.section(ctx,data,section)).join("")}</div>
-      <nav class="bg3-controls" aria-label="Bar controls"><div class="bg3-control-column"><small>Page</small><button data-command="previous" aria-label="Previous page" title="Previous page">▴</button><span>${data.page+1}/${PAGE_COUNT}</span><button data-command="next" aria-label="Next page" title="Next page">▾</button></div><div class="bg3-control-column"><small>Rows</small><button data-command="moreRows" aria-label="Add row" title="Add row" ${data.rows>=MAX_ROWS||data.locked?'disabled':''}>+</button><span>${data.rows}</span><button data-command="fewerRows" aria-label="Remove row" title="Remove row" ${data.rows<=2||data.locked?'disabled':''}>−</button></div>${data.locked?'':`<div class="bg3-preferences"><small>Preferences</small><button data-command="preferences" aria-label="Character preferences" title="Character preferences"><i class="fa-solid fa-gear"></i></button>${this.editor.active?'<button data-command="finishEditing" aria-label="Finish editing" title="Finish editing">✓</button>':''}</div>`}<div class="bg3-control-bottom"><button data-command="lock" aria-label="${data.locked?"Unlock":"Lock"} bar" title="${data.locked?"Unlock":"Lock"} bar"><i class="fa-solid ${data.locked?"fa-lock":"fa-unlock"}"></i></button><button data-command="macros" title="Show Foundry macro bar" aria-label="Show Foundry macro bar">▦</button></div></nav></div>
+      <nav class="bg3-controls" aria-label="Bar controls"><div class="bg3-control-column"><small>Page</small><button data-command="previous" aria-label="Previous page" title="Previous page">▴</button><span>${data.page+1}/${PAGE_COUNT}</span><button data-command="next" aria-label="Next page" title="Next page">▾</button></div><div class="bg3-control-column"><small>Rows</small><button data-command="moreRows" aria-label="Add row" title="Add row" ${data.rows>=MAX_ROWS||data.locked?'disabled':''}>+</button><span>${data.rows}</span><button data-command="fewerRows" aria-label="Remove row" title="Remove row" ${data.rows<=2||data.locked?'disabled':''}>−</button></div>${data.locked?'':`<div class="bg3-preferences"><small>Preferences</small><button data-command="preferences" aria-label="Character preferences" title="Character preferences"><i class="fa-solid fa-gear"></i></button>${this.editor.active?'<button data-command="finishEditing" aria-label="Enter Play mode" title="Enter Play mode">▶</button>':''}</div>`}<div class="bg3-control-bottom"><button class="bg3-mode-toggle" data-command="toggleMode" aria-label="${data.locked?"Play mode; switch to Build":"Build mode; switch to Play"}" title="${data.locked?"Play mode · click for Build mode":"Build mode · click for Play mode"}">${icon(data.locked?"play":"build")}</button><button data-command="macros" title="Show Foundry macro bar" aria-label="Show Foundry macro bar">▦</button></div></nav></div>
       <button class="bg3-end-turn ${isTurn(ctx)?"is-turn":""}" data-command="endTurn" ${isTurn(ctx)?"":"disabled"} aria-label="End turn">${icon("hourglass")}<small>End turn</small></button><button class="bg3-rest" data-command="rest" title="Short or long rest" aria-label="Rest">${icon("rest")}</button></div>`;
     document.body.append(root);this.paintResources();this.applyScale();this.bind(ctx,data);
     root.querySelectorAll('[data-section]').forEach(section=>this.editor.decorate(ctx,data,section));this.editor.paint();this.paintResources();this.applyScale();
@@ -89,9 +89,9 @@ export class CombatBar {
       b.oncontextmenu=run(e=>{e.preventDefault();const [section,index]=b.dataset.slot.split(':');if(this.editor.active&&!['melee','ranged'].includes(section))return this.editor.menuAt(ctx,{section,index:Number(index)},e);return this.assign(ctx,b);});
       if(b.dataset.item)this.hover(b,()=>this.itemTooltip(ctx,ctx.actor.items.get(b.dataset.item),false,null,this.editor.active&&!/^(melee|ranged):/.test(b.dataset.slot)));
       b.ondragstart=e=>this.editor.startDrag(ctx,b,e);
-      b.ondragover=e=>{if(!data.locked){e.preventDefault();b.classList.add('drop-target');}};
+      b.ondragover=e=>{e.preventDefault();b.classList.add('drop-target');};
       b.ondragleave=()=>b.classList.remove('drop-target');
-      b.ondrop=run(async e=>{e.preventDefault();e.stopPropagation();b.classList.remove('drop-target');if(await this.editor.drop(ctx,b,e))return;if(data.locked)return;let drop;try{drop=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}if(drop.type!=='Item')return;const item=await fromUuid(drop.uuid);if(item?.actor?.uuid!==ctx.actor.uuid)throw new Error("Drag an item from this character's sheet.");await this.assignItem(ctx,b,item.id,drop.bg3);});
+      b.ondrop=run(async e=>{e.preventDefault();e.stopPropagation();b.classList.remove('drop-target');if(await this.editor.drop(ctx,b,e))return;let drop;try{drop=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}if(drop.type!=='Item')return;const item=await fromUuid(drop.uuid);if(item?.actor?.uuid!==ctx.actor.uuid)throw new Error("Drag an item from this character's sheet.");await this.assignItem(ctx,b,item.id,drop.bg3);});
     });
     root.querySelectorAll('[data-weapon-type]').forEach(b=>b.onclick=run(()=>editLayout(ctx,d=>{d.weaponTab=b.dataset.weaponType;})));
     root.querySelectorAll('[data-loadout]').forEach(b=>b.onclick=run(()=>editLayout(ctx,d=>equipLoadout(ctx,d,d.weaponTab,Number(b.dataset.loadout)))));
@@ -107,14 +107,14 @@ export class CombatBar {
       b.oncontextmenu=run(e=>{e.preventDefault();return item?item.sheet.render(true):this.changeClassResource(ctx,pool,1);});
     });
     root.querySelectorAll('[data-custom]').forEach(b=>{const item=ctx.actor.items.get(data.resources[Number(b.dataset.custom)].itemId);if(item)this.hover(b,()=>this.itemTooltip(ctx,item,true));b.onclick=run(e=>this.useResource(ctx,Number(b.dataset.custom),e));b.oncontextmenu=run(e=>{e.preventDefault();return this.configureResource(ctx,Number(b.dataset.custom));});});
-    const resources=root.querySelector('[data-resource-drop]');resources.ondragover=e=>{if(!data.locked)e.preventDefault();};resources.ondrop=run(async e=>{e.preventDefault();if(data.locked)return;let drop;try{drop=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}const item=drop.uuid?await fromUuid(drop.uuid):null;if(item?.actor?.uuid!==ctx.actor.uuid||!usesBadge(item))throw new Error("Drop a feature, spell, or item with its own limited uses from this character.");await editLayout(ctx,d=>{if(!d.resources.some(r=>r.itemId===item.id))d.resources.push({itemId:item.id});});});
+    const resources=root.querySelector('[data-resource-drop]');resources.ondragover=e=>{e.preventDefault();};resources.ondrop=run(async e=>{e.preventDefault();let drop;try{drop=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}const item=drop.uuid?await fromUuid(drop.uuid):null;if(item?.actor?.uuid!==ctx.actor.uuid||!usesBadge(item))throw new Error("Drop a feature, spell, or item with its own limited uses from this character.");await editLayout(ctx,d=>{if(!d.resources.some(r=>r.itemId===item.id))d.resources.push({itemId:item.id});});});
     const grip=root.querySelector('[data-command="move"]');grip.onpointerdown=e=>{
       if(data.locked||e.button!==0)return;e.preventDefault();this.activities.close();grip.setPointerCapture(e.pointerId);const start={x:e.clientX,y:e.clientY};let offset={...data.offset};
       grip.onpointermove=ev=>{offset={x:Math.max(-innerWidth/2+100,Math.min(innerWidth/2-100,data.offset.x+ev.clientX-start.x)),y:Math.max(-innerHeight+220,Math.min(0,data.offset.y+ev.clientY-start.y))};root.style.setProperty('--offset-x',`${offset.x}px`);root.style.setProperty('--offset-y',`${offset.y}px`);};
       grip.onpointerup=run(async()=>{grip.onpointermove=null;grip.onpointerup=null;await editLayout(ctx,d=>{d.offset=offset;});});
     };
   }
-  async assign(ctx,button){if(layout(ctx).locked)return ui.notifications.info("Unlock the bar to change slots.");const [section,index]=(button.dataset.slot??button.dataset.assign).split(':');this.hideTooltip();const title={features:'Slot a Feature',spells:'Slot a Spell',items:'Slot an Item',melee:'Slot a Melee Weapon',ranged:'Slot a Ranged Weapon'}[section]??`Slot into ${sectionName(section,ctx)}`;const id=await pickItem(ctx,title,item=>matchesItem(item,section,Number(index)),{category:isCustomSection(section)?'all':['melee','ranged'].includes(section)?'items':section});if(id===undefined)return;await this.assignItem(ctx,button,id);}
+  async assign(ctx,button){const [section,index]=(button.dataset.slot??button.dataset.assign).split(':');this.hideTooltip();const title={features:'Slot a Feature',spells:'Slot a Spell',items:'Slot an Item',melee:'Slot a Melee Weapon',ranged:'Slot a Ranged Weapon'}[section]??`Slot into ${sectionName(section,ctx)}`;const id=await pickItem(ctx,title,item=>matchesItem(item,section,Number(index)),{category:isCustomSection(section)?'all':['melee','ranged'].includes(section)?'items':section});if(id===undefined)return;await this.assignItem(ctx,button,id);}
   bindResize(handle,ctx,data,run){
     const key=handle.dataset.resize;
     handle.onkeydown=run(async e=>{
@@ -154,7 +154,6 @@ export class CombatBar {
     const [section,rawIndex]=(button.dataset.slot??button.dataset.assign).split(':'),index=Number(rawIndex),weapon=['melee','ranged'].includes(section),item=id?ctx.actor.items.get(id):null;
     if(id&&!matchesItem(item,section,index))throw new Error(`That item does not fit a ${section} slot.`);
     await editLayout(ctx,async d=>{
-      if(d.locked)return;
       const destination=weapon?d.weapons[section][Number(button.dataset.loadoutIndex)]:d.pages[d.page][section];const previous=destination[index];
       destination[index]=id;
       if(source?.owner===ctx.document.uuid){const [ss,si]=source.slot.split(':'),src=['melee','ranged'].includes(ss)?d.weapons[ss][Number(source.loadout)]:d.pages[source.page]?.[ss];if(src&&!(src===destination&&Number(si)===index)&&(!previous||matchesItem(ctx.actor.items.get(previous),ss,Number(si))))src[Number(si)]=previous;}
@@ -180,7 +179,7 @@ export class CombatBar {
     if(command==='sheet')return ctx.actor.sheet.render(true);
     if(command==='macros'){this.macroMode=true;return this.render();}
     if(command==='checks')return this.checks(ctx);
-    if(command==='lock')return editLayout(ctx,d=>{d.locked=!d.locked;});
+    if(command==='toggleMode'||command==='lock')return editLayout(ctx,d=>{d.locked=!d.locked;});
     if(command==='previous'||command==='next')return editLayout(ctx,d=>{d.page=(d.page+(command==='next'?1:-1)+d.pages.length)%d.pages.length;});
     if(command==='moreRows'||command==='fewerRows'){if(data.locked)return;return editLayout(ctx,d=>{d.rows=Math.max(2,Math.min(MAX_ROWS,d.rows+(command==='moreRows'?1:-1)));});}
     if(command==='endTurn'){if(isTurn(ctx))return game.user.isGM?game.combat.nextTurn():requestGM({action:'endTurn',source:ctx.token.uuid});return;}
@@ -198,7 +197,6 @@ export class CombatBar {
     });
   }
   async addResource(ctx,index){
-    if(layout(ctx).locked)return ui.notifications.info('Unlock the bar to change resources.');
     this.hideTooltip();
     const choice=await choose('Add Resource','<p>Track uses from a feature, spell, or item, or create your own counter.</p><p>You can also drag an entry with limited uses onto the resource strip. Spells that only spend spell slots are already tracked by the slot diamonds.</p>',[{value:'feature',label:'Feature'},{value:'spell',label:'Spell'},{value:'item',label:'Item'},{value:'custom',label:'Custom Counter'}],{width:520});
     if(!choice)return;
@@ -209,7 +207,7 @@ export class CombatBar {
     await editLayout(ctx,d=>{if(d.resources.some((r,i)=>r.itemId===id&&i!==index))return;if(index===undefined)d.resources.push({itemId:id});else d.resources[index]={itemId:id};});
   }
   async configureResource(ctx,index,custom=false){
-    const data=layout(ctx);if(data.locked)return;const existing=data.resources[index];
+    const data=layout(ctx);const existing=data.resources[index];
     if(existing?.itemId&&!custom){
       const item=ctx.actor.items.get(existing.itemId);
       const choice=await choose('Tracked Resource',`<p><strong>${esc(item?.name??'Missing item')}</strong> · ${esc(usesBadge(item)||'No limited uses')}</p><p>Uses and recovery come from the character sheet. Click the resource to use it.</p>`,[{value:'replace',label:'Change Resource'},{value:'remove',label:'Remove'}]);

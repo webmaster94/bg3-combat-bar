@@ -1,3 +1,21 @@
+## 0.1.14 Build/Play modes and conditional Spells section, September 28, 2026
+
+Build replaces unlocked mode; Play replaces locked mode. The existing saved flag remains compatible. Original gold hammer-and-saw and play SVGs identify the current mode. Play restores left-click use, empty-slot assignment, right-click assign/replace/clear, slot drops, individual swaps, complete-group moves, and resource add/change/remove/drop. There is no extra removal icon. Structural group operations and section configuration remain in Build. Play refuses a group move that would dismantle another group.
+
+The Spells section now depends on actual spellcasting classes, slot capacity, owned spell items, or Cast activities linked to spells. A casting ability alone is insufficient: the native D&D class data can set one on a noncaster. Depleted slots/charges and unprepared spells still retain the section. Hiding affects presentation only; saved page assignments, group metadata, widths, and order remain intact.
+
+Validation: **74 automated tests** pass, including new mode click/drop/resource tests and four spell-section visibility/persistence tests. Syntax and whitespace checks pass.
+
+In the isolated Foundry **14.360 / D&D5e 5.3.3** world:
+
+- Inspected both mode icons and switched from Build to Play.
+- Right-clicked a Play item, cleared its slot, then left-clicked the empty slot and assigned a potion.
+- Dragged the two-member Techniques group to the second row while in Play; both icons and its title moved, with no rename pencil visible.
+- Added a feature through the resource-strip + picker, then right-clicked and removed that tracked resource, all in Play.
+- Confirmed Spells is absent on an ordinary monk and a noncaster with Metamagic Adept, while remaining visible on the monk/wizard and sorcerer. Switching characters updates visibility without a reload.
+
+Existing movement, resource, and compatibility regressions still pass. No new v13 or Midi-QOL live run was performed. Forge and existing campaign clients were not modified or reloaded.
+
 ## 0.1.13 unlock selection fix, September 28, 2026
 
 The lock flag and the editor's active flag were independent. Unlocking changed only the lock flag, so the real slot handlers still opened the picker or used items until the user separately chose Save & Edit Slots in Preferences.
