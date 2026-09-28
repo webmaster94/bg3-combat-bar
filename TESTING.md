@@ -1,3 +1,9 @@
+## 0.1.18 contextual section control, September 28, 2026
+
+Collapse and Expand now share one 14px-high control area. Expanded and partially open sections show only Collapse; zero-width sections show only Expand. The same collapsed class drives the control during divider dragging and after saved layout updates. Existing click behavior is retained.
+
+All 87 tests and syntax checks pass. Local Foundry UI verification covered all collapsed sections (one visible Expand control each), full Items expansion to 526px (only Collapse), partial width 518px (only Collapse), and double-click collapse to zero (only Expand). No BG3 errors were logged.
+
 ## 0.1.17 collapsible sections, September 28, 2026
 
 Sections now support zero-width grids with compact vertical-label rails below the heading row. Double-click the left arrow to collapse; one click on the right arrow below it fully expands the twelve-column grid. Fixed Actions remain visible when Features is collapsed. Controls and dragging work in Build and Play, and hidden grids are inert.
