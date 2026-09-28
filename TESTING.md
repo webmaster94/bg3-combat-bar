@@ -1,3 +1,17 @@
+## 0.1.15 HUD controls, names, movement, and sight, September 28, 2026
+
+Validation: **82 automated tests** pass; syntax, whitespace, and package build checks pass.
+
+Play divider keyboard regression failed before the fix (width stayed 262 instead of becoming 270), then passed after removing the lock guard. Mouse dividers and the whole-bar drag handle now operate in Play. Up advances pages; down decrements with wrapping. Mode icons show the destination; the extra Play button under Preferences is removed.
+
+Token names are editable in Build. Linked tokens require Token Name / Actor Name / Cancel; unlinked tokens update only their token. Regression checks assert which native document receives the update and preserve separation from the actor. Adjacent groups use contrasting, deterministic colors.
+
+Inspected the Forge settings dialog read-only and reproduced its overlap with a temporary, unsaved section row. Improved Settings inserted favorite/copy/reset/scope controls into the Show label, pushing its checkbox onto the trash button. The fix scopes out those injected controls within this editor and constrains each grid cell. The temporary row was canceled.
+
+Local Foundry 14.360 / D&D5e 5.3.3 checks: correct mode artwork; no extra Play button; three adjacent groups with distinct colors; page 1 -> 2 via Up and page 1 -> 10 via Down; linked Token Name prompt and persisted token alias; Play keyboard resize followed by a pointer drag from width 182 to 211.41; movement choice persistence; normal-sight selection and Automatic Sight restoration. Tooltip description measured 361px inside a 365px card, using the available width below its header.
+
+Sight compatibility uses D&D 6.0.5's published `_applySenseVision` preparation boundary, chaining native behavior via libWrapper when available (a wrapper otherwise), and reapplying only the token's explicit sight choice. Tests reproduce automatic sense-derived vision overriding native fields, confirm actor senses stay intact, retain unrelated detection modes, and handle both v13 array and v14 object schemas. Manual Token Configuration releases the override. Movement reads both D&D 5 speed fields and D&D 6 speed maps; v13 omits the unsupported movement-action selector.
+
 ## 0.1.14 Build/Play modes and conditional Spells section, September 28, 2026
 
 Build replaces unlocked mode; Play replaces locked mode. The existing saved flag remains compatible. Original gold hammer-and-saw and play SVGs identify the current mode. Play restores left-click use, empty-slot assignment, right-click assign/replace/clear, slot drops, individual swaps, complete-group moves, and resource add/change/remove/drop. There is no extra removal icon. Structural group operations and section configuration remain in Build. Play refuses a group move that would dismantle another group.

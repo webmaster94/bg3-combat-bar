@@ -21,6 +21,17 @@ export function groupBounds(slots){
   const rows=slots.map(i=>Math.floor(i/C)),cols=slots.map(i=>i%C);
   return {row:Math.min(...rows),lastRow:Math.max(...rows),col:Math.min(...cols),lastCol:Math.max(...cols)};
 }
+export function groupColors(groups){
+  const palette=['#85cbd0','#e5b66f','#c4a3ee','#9fd28b','#ef9ea8','#8fb8f1'];
+  const sorted=groups.map(g=>({...g,b:groupBounds(g.slots)})).sort((a,b)=>a.b.row-b.b.row||a.b.col-b.b.col||a.id.localeCompare(b.id));
+  const colors=new Map(),placed=[];
+  for(const group of sorted){
+    const b=group.b,neighbors=placed.filter(g=>g.section===group.section&&g.b.col<=b.lastCol+1&&g.b.lastCol+1>=b.col&&g.b.row<=b.lastRow+1&&g.b.lastRow+1>=b.row);
+    const used=new Set(neighbors.map(g=>colors.get(g.id)));
+    colors.set(group.id,palette.find(c=>!used.has(c))??`hsl(${(colors.size*137.5)%360} 65% 75%)`);placed.push(group);
+  }
+  return colors;
+}
 export function addGroup(data,refs,name,id){
   refs=expandGroups(data,refs);const section=refs[0]?.section;
   if(!section||refs.some(r=>r.section!==section))throw Error('Choose slots within one section to make a group.');

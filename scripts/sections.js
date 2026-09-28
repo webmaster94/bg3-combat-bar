@@ -50,7 +50,7 @@ export function editSection(id,ctx){
 
 export function characterPreferences(ctx,{focusSection}={}){
   const local=ctx.document.getFlag(ID,'characterSections')??{},globals=sectionDefinitions();
-  const row=s=>`<div class="bg3-section-setting" data-character-section="${s.id}"><input name="section-name" aria-label="Section name" value="${esc(s.name)}" maxlength="40" required><label><input name="section-visible" type="checkbox" ${s.visible?'checked':''}>Show</label><button type="button" data-remove-section aria-label="Remove ${esc(s.name)}"><i class="fa-solid fa-trash" inert></i></button></div>`;
+  const row=s=>`<div class="bg3-section-setting" data-character-section="${s.id}"><input name="section-name" aria-label="Section Name" value="${esc(s.name)}" maxlength="40" required><label><input name="section-visible" type="checkbox" ${s.visible?'checked':''}>Show</label><button type="button" data-remove-section aria-label="Remove ${esc(s.name)}"><i class="fa-solid fa-trash" inert></i></button></div>`;
   const save=async button=>{
     if(!ctx.actor.isOwner)throw Error('You do not own this character.');
     const form=button.form;
@@ -71,7 +71,7 @@ function managerOptions(shared){
   const defaults=normalizeSections(game.settings.get(ID,'defaultSections'));
   const personal=game.user.getFlag(ID,'sections')??{};
   const rows=normalizeSections(shared?defaults:personal.custom);
-  const rowHTML=s=>`<div class="bg3-section-setting" data-section-id="${s.id}"><input name="section-name" aria-label="Section name" value="${esc(s.name)}" maxlength="40" required><label><input type="checkbox" name="section-visible" ${s.visible?'checked':''}>Show</label><button type="button" data-remove-section aria-label="Remove ${esc(s.name)}"><i class="fa-solid fa-trash" inert></i></button></div>`;
+  const rowHTML=s=>`<div class="bg3-section-setting" data-section-id="${s.id}"><input name="section-name" aria-label="Section Name" value="${esc(s.name)}" maxlength="40" required><label><input type="checkbox" name="section-visible" ${s.visible?'checked':''}>Show</label><button type="button" data-remove-section aria-label="Remove ${esc(s.name)}"><i class="fa-solid fa-trash" inert></i></button></div>`;
   return {window:{title:shared?'Global Default Sections':'Global Custom Sections'},position:{width:540},classes:['bg3-app','bg3-section-manager'],modal:true,rejectClose:false,
     content:`<p>${shared?'Create sections for everyone in this world. Turn off Show to keep a section ready for later.':'Create your own global sections for every character and choose which shared sections you see.'} Each section accepts items, spells, and features. Assignments stay with each character.</p>${!shared&&defaults.length?`<fieldset><legend>GM default sections</legend>${defaults.map(s=>`<label class="bg3-shared-visibility"><input type="checkbox" data-default-id="${s.id}" ${!personal.hiddenDefaults?.includes(s.id)?'checked':''}><span>${esc(s.name)}${!s.visible?' <small>Hidden by GM</small>':''}</span></label>`).join('')}</fieldset>`:''}<div data-section-settings>${rows.map(rowHTML).join('')}</div><button type="button" data-add-section><i class="fa-solid fa-plus" inert></i> Add Section</button>`,
     buttons:[{action:'save',label:'Save Sections',callback:async(_event,button)=>{

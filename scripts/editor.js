@@ -2,7 +2,7 @@ import {SECTION_COLUMNS as C,escapeHTML as esc,matchesItem} from './model.js';
 import {layout,editLayout} from './state.js';
 import {choose,confirm} from './dialogs.js';
 import {sectionName,characterPreferences} from './sections.js';
-import {slotKey,groupsFor,expandGroups,addGroup,ungroup,removeSlots,planTransfer,applyTransfer,groupBounds,rowGeometry} from './groups.js';
+import {slotKey,groupsFor,expandGroups,addGroup,ungroup,removeSlots,planTransfer,applyTransfer,groupBounds,rowGeometry,groupColors} from './groups.js';
 
 export class BarEditor{
   constructor(bar){this.bar=bar;this.active=false;this.selected=[];}
@@ -27,7 +27,7 @@ export class BarEditor{
     this.bar.root?.querySelectorAll('[data-slot]').forEach(b=>{const selectable=!['melee','ranged'].includes(b.dataset.slot.split(':')[0]);b.classList.toggle('is-selected',keys.has(b.dataset.slot));b.draggable=!!b.dataset.item||(this.active&&keys.has(b.dataset.slot));if(selectable&&this.active)b.setAttribute('aria-pressed',String(keys.has(b.dataset.slot)));else b.removeAttribute('aria-pressed');});
   }
   decorate(ctx,data,section){
-    const groups=groupsFor(data).filter(g=>g.section===section.dataset.section),geometry=rowGeometry(groups,data.rows);
+    const groups=groupsFor(data).filter(g=>g.section===section.dataset.section),geometry=rowGeometry(groups,data.rows),colors=groupColors(groups);
     const grid=section.querySelector('.bg3-grid'),viewport=section.querySelector('.bg3-viewport');if(!grid)return;
     viewport.style.height=`${geometry.height}px`;grid.style.height=`${geometry.height}px`;
     grid.querySelectorAll('.bg3-slot-wrap').forEach((el,i)=>{el.style.left=`${i%C*44}px`;el.style.top=`${geometry.slotTop(Math.floor(i/C))}px`;});
@@ -36,6 +36,7 @@ export class BarEditor{
       const frame=document.createElement('div');frame.className='bg3-group-frame';frame.style.cssText=`left:${b.col*44}px;top:${geometry.slotTop(b.row)}px;width:${(b.lastCol-b.col+1)*44-2}px;height:${geometry.slotTop(b.lastRow)-geometry.slotTop(b.row)+42}px`;grid.append(frame);
       const title=document.createElement('div');title.className='bg3-group-title';title.style.cssText=`left:${b.col*44}px;top:${geometry.titleTop(b.row)}px;width:${(b.lastCol-b.col+1)*44-2}px`;
       title.innerHTML=`<span title="${esc(group.name)}">${esc(group.name)}</span>${data.locked?'':`<button type="button" aria-label="Rename ${esc(group.name)}"><i class="fa-solid fa-pencil" inert></i></button>`}`;
+      title.style.setProperty('--group-color',colors.get(group.id));frame.style.setProperty('--group-color',colors.get(group.id));
       title.querySelector('button')?.addEventListener('click',()=>this.rename(ctx,group.id,title));grid.append(title);
       if(this.renameId===group.id&&!data.locked)this.rename(ctx,group.id,title);
     }

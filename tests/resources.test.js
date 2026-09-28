@@ -27,11 +27,11 @@ test('multiclass pools use prepared feature uses and avoid duplicate actor resou
 });
 test('Ki, activity uses, and legacy labeled resources retain their actual pool',()=>{
   const ki=feature('ki','Ki','monks-focus',7,3);
-  assert.equal(classResources({items:[ki]})[0].name,'Ki points');
+  assert.equal(classResources({items:[ki]})[0].name,'Ki Points');
   const font=feature('font','Sorcery points','sorcery-points','');
   font.system.activities=[{id:'pool',uses:{max:4,value:2}}];
   assert.equal(classResources({items:[font]})[0].activityId,'pool');
-  const legacy=classResources({items:[],system:{resources:{primary:{label:'Ki points',max:8,value:0}}}})[0];
+  const legacy=classResources({items:[],system:{resources:{primary:{label:'Ki Points',max:8,value:0}}}})[0];
   assert.equal(legacy.resourceKey,'primary');assert.equal(legacy.value,0);
   assert.deepEqual(classResources({items:[feature('f','Font of Magic','font-of-magic','@scale.sorcerer.points')]}),[]);
 });

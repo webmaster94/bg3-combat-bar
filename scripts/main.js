@@ -1,3 +1,4 @@
+import {registerSightPreference} from './token-controls.js';
 import {ID,turnKey} from "./model.js";
 import {context,layout,editLayout,consume,canSpend,economy,isTurn,midiReactions} from "./state.js";
 import {CombatBar} from "./bar.js";
@@ -49,6 +50,7 @@ Hooks.once('init',()=>{
   game.settings.register(ID,'trackSheetActions',{name:'Track actions used from character sheets',hint:'Also update action counters when a system activity is used outside the bar.',scope:'world',config:true,type:Boolean,default:true});
   game.keybindings.register(ID,'toggleMacroBar',{name:'Swap combat and macro bars',editable:[{key:'KeyB',modifiers:['Shift']}],onDown:()=>{if(!bar?.visible())return false;bar.macroMode=!bar.macroMode;bar.render();return true;}});
 });
+Hooks.once('setup',()=>registerSightPreference());
 Hooks.once('ready',()=>{
   if(game.system.id!=='dnd5e')return;
   bar=new CombatBar();game.modules.get(ID).api={bar,refresh,context,layout,economy};

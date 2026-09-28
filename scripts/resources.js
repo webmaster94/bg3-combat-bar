@@ -21,13 +21,13 @@ export function classResources(actor) {
     if(!uses)for(const activity of item.system.activities??[]){uses=limitedUses(activity.uses);if(uses){activityId=activity.id;break;}}
     if(!uses)continue;
     const ki=/\bki\b/i.test(item.name)||slug(item.system.identifier)==='ki';
-    pools.set(kind,{kind,name:kind==='sorcery'?'Sorcery points':ki?'Ki points':'Focus points',itemId:item.id,activityId,...uses});
+    pools.set(kind,{kind,name:kind==='sorcery'?'Sorcery Points':ki?'Ki Points':'Focus Points',itemId:item.id,activityId,...uses});
   }
   // Older sheets sometimes store these pools in a labeled actor resource instead of a feature.
   for(const [key,resource] of Object.entries(actor.system?.resources??{})){
     const name=slug(resource.label),kind=name==='sorcery-points'?'sorcery':['ki','ki-points','focus-points'].includes(name)?'monk':null;
     const uses=limitedUses(resource);
-    if(kind&&uses&&!pools.has(kind))pools.set(kind,{kind,name:kind==='sorcery'?'Sorcery points':name.startsWith('ki')?'Ki points':'Focus points',resourceKey:key,...uses});
+    if(kind&&uses&&!pools.has(kind))pools.set(kind,{kind,name:kind==='sorcery'?'Sorcery Points':name.startsWith('ki')?'Ki Points':'Focus Points',resourceKey:key,...uses});
   }
   return [...pools.values()];
 }
