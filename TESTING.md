@@ -1,3 +1,15 @@
+## 0.1.13 unlock selection fix, September 28, 2026
+
+The lock flag and the editor's active flag were independent. Unlocking changed only the lock flag, so the real slot handlers still opened the picker or used items until the user separately chose Save & Edit Slots in Preferences.
+
+`node --test tests/unlock-mode.test.js` reproduced the reported behavior before the fix: an empty click and right-click opened the picker (two calls), and an already-unlocked character also opened it on click. These tests call the real lock command, editor synchronization, and bound slot handlers, with document storage and picker/use boundaries stubbed.
+
+Selection now follows the persisted lock state on every render. Unlocking, initial load, and character switches enable it directly. Preferences has no separate edit-mode action. The selection menu includes Assign Item for the clicked slot; Finish Editing from either control locks the bar and restores normal item use.
+
+All **64 tests** pass, including four new regressions for unlock selection/context menus, initial unlocked state and redraws, Assign Item, and finishing/re-entering editing. Syntax and whitespace checks pass.
+
+In the isolated Foundry **14.360 / D&D5e 5.3.3** world, verified immediate editing on load; lock then unlock without opening Preferences; selecting empty and occupied slots together; the right-click menu; assigning a potion to the clicked empty slot; and Finish Editing locking the bar and clearing selection. Preferences now shows only Save Preferences and Cancel. No Forge installation or existing campaign client reload was performed. v13 UI was not rerun for this small state-handling change.
+
 ## 0.1.12 character sections and slot groups, September 21, 2026
 
 `npm test`: **60 passing tests**, including 11 new group/editor/character-section checks and all eight movement-refresh regressions. `npm run check` and `git diff --check` pass.

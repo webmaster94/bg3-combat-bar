@@ -87,7 +87,7 @@ export class CombatBar {
     root.querySelectorAll('[data-slot]').forEach(b=>{
       b.onclick=run(e=>{const [section,index]=b.dataset.slot.split(':');if(this.editor.active&&!['melee','ranged'].includes(section))return this.editor.toggle(ctx,{section,index:Number(index)});return b.dataset.item?this.useItem(ctx,ctx.actor.items.get(b.dataset.item),e):this.assign(ctx,b);});
       b.oncontextmenu=run(e=>{e.preventDefault();const [section,index]=b.dataset.slot.split(':');if(this.editor.active&&!['melee','ranged'].includes(section))return this.editor.menuAt(ctx,{section,index:Number(index)},e);return this.assign(ctx,b);});
-      if(b.dataset.item)this.hover(b,()=>this.itemTooltip(ctx,ctx.actor.items.get(b.dataset.item)));
+      if(b.dataset.item)this.hover(b,()=>this.itemTooltip(ctx,ctx.actor.items.get(b.dataset.item),false,null,this.editor.active&&!/^(melee|ranged):/.test(b.dataset.slot)));
       b.ondragstart=e=>this.editor.startDrag(ctx,b,e);
       b.ondragover=e=>{if(!data.locked){e.preventDefault();b.classList.add('drop-target');}};
       b.ondragleave=()=>b.classList.remove('drop-target');
@@ -176,7 +176,7 @@ export class CombatBar {
   }
   async command(command,ctx,data,event){
     if(command==='preferences')return this.editor.preferences(ctx);
-    if(command==='finishEditing'){this.editor.reset();return this.schedule();}
+    if(command==='finishEditing')return this.editor.finish(ctx);
     if(command==='sheet')return ctx.actor.sheet.render(true);
     if(command==='macros'){this.macroMode=true;return this.render();}
     if(command==='checks')return this.checks(ctx);
@@ -242,7 +242,7 @@ export class CombatBar {
   }
   hideTooltip(){clearTimeout(this.hoverTimer);clearTimeout(this.leaveTimer);this.tooltipGeneration++;this.tooltip?.remove();this.tooltip=null;}
   genericTooltip(ctx,id){const a=GENERICS[id],cost=actionCost(ctx.actor,id);return `<header>${icon(id)}<h2>${a.name}</h2><small>Common action</small></header><div class="bg3-tooltip-description"><p>${a.description}</p></div><footer><i class="${cost}">●</i> ${cost==='attack'?'One attack':cost==='bonus'?'Bonus action':'Action'}</footer>`;}
-  async itemTooltip(ctx,item,resource=false,selectedActivity=null){
+  async itemTooltip(ctx,item,resource=false,selectedActivity=null,selecting=false){
     if(!item)return '';const system=item.system,activities=selectedActivity?[selectedActivity]:usableActivities(item),a=activities[0];
     const description=await foundry.applications.ux.TextEditor.implementation.enrichHTML([selectedActivity?.description?.chatFlavor,system.description?.value].filter(Boolean).join('<hr>'),{async:true,secrets:ctx.actor.isOwner,relativeTo:item,rollData:ctx.actor.getRollData()});
     const facts=[];if(a?.range?.value)facts.push(`${a.range.value} ${label(CONFIG.DND5E.distanceUnits?.[a.range.units]??a.range.units)}`);if(a?.duration?.value)facts.push(`${a.duration.value} ${label(CONFIG.DND5E.timePeriods?.[a.duration.units]??a.duration.units)}`);
@@ -250,6 +250,6 @@ export class CombatBar {
     if(system.properties?.has?.('concentration'))facts.push('Concentration');if(system.properties?.has?.('ritual'))facts.push('Ritual');if(selectedActivity&&activityUses(selectedActivity))facts.push(`${activityUses(selectedActivity)} activity uses`);else if(usesBadge(item))facts.push(`${usesBadge(item)} uses`);if(Number(system.quantity)>1)facts.push(`Quantity ${system.quantity}`);
     const state=itemState(item,selectedActivity,ctx.actor);
     const subtitle=item.type==='spell'?`${system.level?'Level '+system.level:'Cantrip'} ${label(CONFIG.DND5E.spellSchools?.[system.school])}`:label(CONFIG.Item.typeLabels?.[item.type]??item.type);
-    return `<header><img src="${esc(selectedActivity?.img||item.img)}" alt=""><h2>${esc(selectedActivity?.name??item.name)}</h2><small>${selectedActivity?`${esc(item.name)} · `:''}${esc(subtitle)}</small></header>${state.reasons.length?`<div class="bg3-unavailable-reason">${state.reasons.map(esc).join('<br>')}</div>`:''}<div class="bg3-tooltip-description">${description||'<p>No description provided.</p>'}</div>${facts.length?`<div class="bg3-tooltip-facts">${facts.map(f=>`<span>${esc(f)}</span>`).join('')}</div>`:''}${activities.length>1?`<div class="bg3-tooltip-facts">${activities.map(a=>`<span>${esc(a.name)}</span>`).join('')}</div>`:''}<footer><i class="${a?.activation?.type??'action'}">●</i> ${esc(label(CONFIG.DND5E.activityActivationTypes?.[a?.activation?.type]??a?.activation?.type??'Use item'))}${item.type==='spell'&&system.level>0&&!usesBadge(item)?` · Level ${system.level} spell slot`:''}<small>${selectedActivity?'Click to use this activity':activities.length>1&&!resource?'Click to choose an activity · Right-click to change this slot':resource==='class'?'Right-click to open feature':resource?'Right-click to configure this resource':'Right-click to change this slot'}</small></footer>`;
+    return `<header><img src="${esc(selectedActivity?.img||item.img)}" alt=""><h2>${esc(selectedActivity?.name??item.name)}</h2><small>${selectedActivity?`${esc(item.name)} · `:''}${esc(subtitle)}</small></header>${state.reasons.length?`<div class="bg3-unavailable-reason">${state.reasons.map(esc).join('<br>')}</div>`:''}<div class="bg3-tooltip-description">${description||'<p>No description provided.</p>'}</div>${facts.length?`<div class="bg3-tooltip-facts">${facts.map(f=>`<span>${esc(f)}</span>`).join('')}</div>`:''}${activities.length>1?`<div class="bg3-tooltip-facts">${activities.map(a=>`<span>${esc(a.name)}</span>`).join('')}</div>`:''}<footer><i class="${a?.activation?.type??'action'}">●</i> ${esc(label(CONFIG.DND5E.activityActivationTypes?.[a?.activation?.type]??a?.activation?.type??'Use item'))}${item.type==='spell'&&system.level>0&&!usesBadge(item)?` · Level ${system.level} spell slot`:''}<small>${selecting?'Click to select · Right-click for selection options':selectedActivity?'Click to use this activity':activities.length>1&&!resource?'Click to choose an activity · Right-click to change this slot':resource==='class'?'Right-click to open feature':resource?'Right-click to configure this resource':'Right-click to change this slot'}</small></footer>`;
   }
 }

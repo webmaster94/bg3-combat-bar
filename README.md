@@ -10,7 +10,7 @@ In Foundry's **Install Module** dialog, paste this manifest URL:
 https://github.com/webmaster94/bg3-combat-bar/releases/latest/download/module.json
 ```
 
-Extract `bg3-combat-bar-0.1.12.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
+Extract `bg3-combat-bar-0.1.13.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
 
 The bar appears during combat for the selected owned PC or NPC. If nothing is selected, it follows the owned current combatant or the user's assigned character. The GM-controlled world setting **Show outside combat** allows everyone to prepare their bars before combat. **Bar scale** remains a personal client setting. Both settings apply when saved without a browser reload; changing scale updates the existing bar in place.
 
@@ -18,8 +18,8 @@ For Foundry v13, use D&D5e **5.3.3**, the latest system release supported by v13
 
 ## Controls
 
-- Click an empty slot to choose from the actor's matching items. Drop a sheet item onto any matching slot to assign it. Items belonging to another actor are rejected.
-- Click an assigned slot to use its item through D&D's activity workflow. Right-click an assigned slot to replace or clear it. Alt-click has no separate slot-assignment behavior.
+- Unlock the bar to select slots. Right-click a slot and choose **Assign Item…** to fill or replace it from the actor's matching items, or drop a sheet item onto it. Items belonging to another actor are rejected. Weapon slots keep their direct click/right-click picker while unlocked.
+- Lock the bar to use assigned items through D&D's activity workflow. Unlock it for selection and the right-click editing menu. Alt-click has no separate slot-assignment behavior.
 - The weapon tabs select melee or ranged loadouts. Each has two numbered loadouts with a main-hand and off-hand slot. Assigning a weapon or selecting a numbered loadout equips that loadout and unequips weapons managed by the other loadouts. Off-hand slots also accept shields.
 - Drag assigned icons to exchange slots. Drag section headings to reorder features, spells, and items within their shared frame. Drag the colored right border of a feature, spell, or item section to adjust its visible width smoothly. The neighboring section gives or receives the same space. Slots retain their positions; narrowing the window clips them, including partial slots, without scrolling or wrapping. Widen the section to reveal them again. Escape cancels a resize. The focused border also accepts Left/Right arrows and Home/End. Drag the diamond above the portrait to move the whole bar.
 - The page controls switch between ten pages. The adjacent **Rows + / −** controls reveal between two and six rows, starting at two. Reducing rows hides their assignments until expanded again. Weapons and resources are shared across pages. Locking prevents rearrangement while allowing item use, page changes, weapon switching, and drag-off removal.
@@ -95,7 +95,7 @@ Shared definitions are world settings; personal definitions and visibility overr
 
 Unlock the bar and click the cog under **Preferences**, beside **Rows +**. Add character sections here, or hide global sections for this character. These preferences belong to the linked actor or the individual unlinked token. Existing settings-menu sections remain global. Saving applies immediately without reloading.
 
-Choose **Save & Edit Slots** to organize icons. Assignable slots have red outlines; click to select them in green. Right-click a selected slot for **Group**, **Ungroup**, **Send To…**, **Remove**, or **Clear Selection**. **Finish Editing** returns to normal item use; the checkmark beside the cog does the same.
+Unlocking immediately enables slot selection; opening or saving Preferences is not required. Assignable slots have red outlines; click to select them in green. Right-click a selected slot for **Assign Item…**, **Group**, **Ungroup**, **Send To…**, **Remove**, or **Clear Selection**. **Finish Editing** locks the bar and returns to normal item use; the checkmark beside the cog does the same.
 
 Groups are rectangular blocks within one section, including empty slots. Select the block, choose Group, type its title, and press Enter. Groups have a turquoise double border and a centered heading. A group starting below the first row inserts room for its title without changing slot positions. Click its pencil while unlocked to rename it; Escape cancels a title edit. Drag any assigned member to move the whole group. In edit mode, dragging a selected icon moves the entire selection, which can span sections.
 

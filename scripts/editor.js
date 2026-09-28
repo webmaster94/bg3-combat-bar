@@ -10,10 +10,12 @@ export class BarEditor{
   sync(ctx,data){
     const key=`${ctx.document.uuid}:${data.page}`;
     if(this.key!==key){this.selected=[];this.renameId=null;this.closeMenu();}this.key=key;
-    if(data.locked){this.active=false;this.selected=[];}
+    this.active=!data.locked;
+    if(data.locked){this.selected=[];this.renameId=null;}
     this.closeMenu();
   }
-  preferences(ctx){return characterPreferences(ctx,{editSlots:()=>{this.active=true;this.selected=[];this.bar.schedule();}});}
+  async finish(ctx){await editLayout(ctx,d=>{d.locked=true;});this.reset();this.bar.schedule();}
+  preferences(ctx){return characterPreferences(ctx);}
   toggle(ctx,ref){
     const refs=expandGroups(layout(ctx),[ref]),keys=new Set(refs.map(slotKey)),selected=new Set(this.selected.map(slotKey));
     this.selected=refs.every(r=>selected.has(slotKey(r)))?this.selected.filter(r=>!keys.has(slotKey(r))):expandGroups(layout(ctx),[...this.selected,...refs]);
@@ -50,15 +52,20 @@ export class BarEditor{
     event.preventDefault();this.bar.hideTooltip();this.closeMenu();
     if(!this.selected.some(r=>slotKey(r)===slotKey(ref)))this.selected=expandGroups(layout(ctx),[ref]);this.paint();
     const menu=this.menu=document.createElement('div');menu.className='bg3-selection-menu';menu.setAttribute('role','menu');menu.setAttribute('aria-label','Selected slots');
-    menu.innerHTML=[['group','Group'],['ungroup','Ungroup'],['send','Send To…'],['remove','Remove'],['clear','Clear Selection'],['done','Finish Editing']].map(([key,label])=>`<button role="menuitem" data-edit-command="${key}">${label}</button>`).join('');
+    menu.innerHTML=[['assign','Assign Item…'],['group','Group'],['ungroup','Ungroup'],['send','Send To…'],['remove','Remove'],['clear','Clear Selection'],['done','Finish Editing']].map(([key,label])=>`<button role="menuitem" data-edit-command="${key}">${label}</button>`).join('');
     document.body.append(menu);const box=menu.getBoundingClientRect();menu.style.left=`${Math.max(0,Math.min(event.clientX,innerWidth-box.width-8))}px`;menu.style.top=`${Math.max(0,Math.min(event.clientY,innerHeight-box.height-8))}px`;
-    menu.querySelectorAll('button').forEach(b=>b.onclick=async()=>{const refs=[...this.selected];this.closeMenu();try{await this.command(ctx,b.dataset.editCommand,refs);}catch(e){ui.notifications.warn(e.message);}});
+    menu.querySelectorAll('button').forEach(b=>b.onclick=async()=>{const refs=[...this.selected];this.closeMenu();try{await this.command(ctx,b.dataset.editCommand,refs,ref);}catch(e){ui.notifications.warn(e.message);}});
     const abort=this.menuAbort=new AbortController();document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target))this.closeMenu();},{signal:abort.signal});
     menu.onkeydown=e=>{if(e.key==='Escape'){this.closeMenu();e.stopPropagation();}};menu.querySelector('button').focus();
   }
-  async command(ctx,command,refs){
+  async command(ctx,command,refs,clicked){
     if(layout(ctx).locked)return;
-    if(command==='clear'||command==='done'){this.selected=[];if(command==='done')this.active=false;this.bar.schedule();return;}
+    if(command==='assign'){
+      const button=this.bar.root?.querySelector(`[data-slot="${slotKey(clicked)}"]`);
+      if(button)await this.bar.assign(ctx,button);return;
+    }
+    if(command==='done')return this.finish(ctx);
+    if(command==='clear'){this.selected=[];this.paint();return;}
     if(command==='group'){
       const id=foundry.utils.randomID();await editLayout(ctx,d=>addGroup(d,refs,'New Group',id));this.renameId=id;this.titleDraft='New Group';
     }else if(command==='ungroup')await editLayout(ctx,d=>ungroup(d,refs));
