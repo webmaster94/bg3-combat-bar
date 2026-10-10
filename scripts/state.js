@@ -66,11 +66,12 @@ export async function consume(ctx, cost) {
   if(cost==='reaction'&&midiReactions(ctx.actor))return;
   return serial(`${ctx.document.uuid}:economy`, async () => {
     const next = spendEconomy(economy(ctx),cost,attacksPerAction(ctx.actor));
+    if (!next && game.settings.get(ID,'disableActionEnforcement')) return;
     if (!next) throw new Error(`No ${cost === "attack" ? "attacks or actions" : `${cost} actions`} remaining. Right-click its resource to restore a spent action.`);
     await ctx.document.setFlag(ID,"economy",next);
   });
 }
-export function canSpend(ctx,cost) { return !game.combat?.started || !!spendEconomy(economy(ctx),cost,attacksPerAction(ctx.actor)); }
+export function canSpend(ctx,cost) { return !game.combat?.started || game.settings.get(ID,'disableActionEnforcement') || !!spendEconomy(economy(ctx),cost,attacksPerAction(ctx.actor)); }
 export function isTurn(ctx) {
   const c = game.combat?.combatant;
   return !!game.combat?.started && !!c && (c.tokenId === ctx.token?.id && c.sceneId === ctx.token?.parent?.id);

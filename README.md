@@ -36,6 +36,8 @@ Assignments live in `flags.bg3-combat-bar.layout` on a linked actor, or on the T
 
 The Spells section appears only when the character has spellcasting classes, spell-slot capacity, spell items (including cantrips), or item/feature Cast activities linked to spells. Spent slots, unprepared spells, and depleted item charges do not hide it. Characters without any of these omit the section in both modes; its saved assignments, groups, and width are preserved for later. Visibility follows character and item changes without reloading.
 
+The GM can enable **Disable Action Enforcement** in BG3 Combat Bar settings to allow actions, bonus actions, reactions, and attacks after the bar's counters are spent. Tracking continues, counters stay at zero when exhausted, and the setting takes effect immediately without reloading. It controls BG3's enforcement only; D&D and Midi-QOL retain their own resource rules. Enforcement remains enabled by default.
+
 ## 2024 actions
 
 Dash consumes an action and adds the current movement speeds for the remainder of the turn. Disengage consumes an action and creates a temporary **Disengage** effect. Automation that recognizes that effect name, including Gambit's opportunity-attack handler, can honor it.

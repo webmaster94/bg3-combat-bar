@@ -47,6 +47,7 @@ Hooks.once('init',()=>{
   registerSectionSettings(refresh);
   game.settings.register(ID,'outsideCombat',{name:'Show outside combat',hint:'GM setting for everyone: show the bar whenever an owned character token is selected. Applies immediately.',scope:'world',config:true,type:Boolean,default:false,requiresReload:false,onChange:refresh});
   game.settings.register(ID,'scale',{name:'Bar scale',hint:'Your personal bar size. Applies immediately without reloading.',scope:'client',config:true,type:Number,range:{min:0.55,max:1.4,step:0.05},default:0.85,requiresReload:false,onChange:()=>bar?.applyScale()});
+  game.settings.register(ID,'disableActionEnforcement',{name:'Disable Action Enforcement',hint:'Allow actions, bonus actions, reactions, and attacks even when the combat bar counters are spent. Counters still track use. Applies immediately.',scope:'world',config:true,type:Boolean,default:false,requiresReload:false});
   game.settings.register(ID,'trackSheetActions',{name:'Track actions used from character sheets',hint:'Also update action counters when a system activity is used outside the bar.',scope:'world',config:true,type:Boolean,default:true});
   game.keybindings.register(ID,'toggleMacroBar',{name:'Swap combat and macro bars',editable:[{key:'KeyB',modifiers:['Shift']}],onDown:()=>{if(!bar?.visible())return false;bar.macroMode=!bar.macroMode;bar.render();return true;}});
 });
