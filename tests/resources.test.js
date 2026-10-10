@@ -43,7 +43,7 @@ function setup(){
   let saved,actions={};
   const actor={type:'character',items:[],classes:{},getFlag:(_scope,key)=>key==='actions'?actions:undefined};
   const ctx={actor,token:{id:'hero',parent:{id:'scene'}},document:{uuid:'Actor.resource-test',getFlag:()=>saved,setFlag:async(_s,_k,v)=>{saved=structuredClone(v);}}};
-  globalThis.game={combat:{id:'fight',started:true,round:1,turn:0,turns:[{id:'guard-c',tokenId:'guard',sceneId:'scene'},{id:'hero-c',tokenId:'hero',sceneId:'scene'}]},modules:new Map()};
+  globalThis.game={settings:{get:()=>false},combat:{id:'fight',started:true,round:1,turn:0,turns:[{id:'guard-c',tokenId:'guard',sceneId:'scene'},{id:'hero-c',tokenId:'hero',sceneId:'scene'}]},modules:new Map()};
   return {ctx,actions};
 }
 test('without Midi installed, reaction remains spent across other turns and round boundaries, refreshing only at own turn',async()=>{

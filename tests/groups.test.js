@@ -71,7 +71,7 @@ test('removal includes the complete selected group but keeps other pages and ass
   removeSlots(d,refs(1));assert.deepEqual(d.pages[0].items.slice(0,3),[null,null,'c']);assert.equal(d.pages[1].items[0],'a');assert.deepEqual(d.groups,[]);
 });
 
-test('character definitions share linked actors and stay independent on unlinked tokens',async()=>{
+test('character definitions share linked actors and stay independent on orphaned unlinked tokens',async()=>{
   globalThis.foundry={utils:{deepClone:structuredClone}};
   globalThis.game={settings:{get:()=>[{id:'custom-global',name:'Global',visible:true}]},user:{getFlag:()=>({custom:[{id:'custom-personal',name:'My global',visible:true}]})}};
   const actor=document('Actor.a',{characterSections:{custom:[{id:'custom-actor',name:'Actor kit',visible:true}]}});

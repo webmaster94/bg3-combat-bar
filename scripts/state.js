@@ -1,13 +1,84 @@
 import {ID, normalizeLayout, turnKey, freshEconomy, spendEconomy} from "./model.js";
-import {sectionDefinitions} from './sections.js';
+import {sectionDefinitions,normalizeSections} from './sections.js';
+import {layoutDocument,usesSharedBar,canOverrideBar,representedActor} from './layout-storage.js';
 const queues = new Map();
+const VIEW_FIELDS=['locked','page','weaponTab','weaponSet','activeLoadout'];
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const sameCounter=(a,b)=>!!a&&!!b&&!a.itemId&&!b.itemId&&a.name===b.name&&a.max===b.max&&a.reset===b.reset;
+const matchCounter=(resources,r,index)=>{const byId=r.id&&resources.find(c=>c.id===r.id&&sameCounter(c,r));if(byId)return byId;if(sameCounter(resources[index],r))return resources[index];const matches=resources.filter(c=>sameCounter(c,r));return matches.length===1?matches[0]:null;};
+const counterIds=data=>{data.resources.forEach((r,i)=>{if(!r.itemId)r.id??=`counter-${i}`;});return data;};
+const readLayout=ctx=>counterIds(normalizeLayout(layoutDocument(ctx).getFlag(ID,'layout'),sectionDefinitions(ctx).map(s=>s.id)));
 export function storage(actor, token) { return token && !token.actorLink ? token : actor; }
 export function context(token) { return token?.actor ? {actor:token.actor, token, document:storage(token.actor,token)} : null; }
-export function layout(ctx) { return normalizeLayout(ctx.document.getFlag(ID,"layout"),sectionDefinitions(ctx).map(s=>s.id)); }
+export function layout(ctx) {
+  const data=readLayout(ctx);if(!usesSharedBar(ctx))return data;
+  const saved=ctx.token.getFlag(ID,'barState'),state=saved?.source===layoutDocument(ctx).uuid?saved:null;
+  for(const key of VIEW_FIELDS)if(Object.hasOwn(state?.view??{},key))data[key]=structuredClone(state.view[key]);
+  data.page=Math.max(0,Math.min(data.pages.length-1,Math.trunc(Number(data.page))||0));
+  for(const r of data.resources)if(!r.itemId){const value=Object.hasOwn(state?.resources??{},r.id)?state.resources[r.id]:r.value??r.max;r.value=Math.max(0,Math.min(Number(r.max),Number(value)));}
+  return data;
+}
 export async function editLayout(ctx, change) {
-  return serial(ctx.document.uuid, async () => {
-    const data = layout(ctx); await change(data); await ctx.document.setFlag(ID,"layout",data); return data;
+  const owner=layoutDocument(ctx);
+  return serial(owner.uuid, async () => {
+    if(layoutDocument(ctx).uuid!==owner.uuid)throw Error('The bar source changed. Try again.');
+    const shared=readLayout(ctx),data=layout(ctx),previous=structuredClone(data.resources);await change(data);
+    if(layoutDocument(ctx).uuid!==owner.uuid)throw Error('The bar source changed. Try again.');
+    data.resources.forEach((r,i)=>{if(!r.itemId)r.id??=previous[i]?.id??`counter-${globalThis.foundry?.utils?.randomID?.()??Math.random().toString(36).slice(2)}`;});
+    if(!usesSharedBar(ctx)){await owner.setFlag(ID,'layout',data);return data;}
+    const state={source:owner.uuid,view:Object.fromEntries(VIEW_FIELDS.map(k=>[k,structuredClone(data[k])])),resources:Object.fromEntries(data.resources.filter(r=>!r.itemId).map(r=>[r.id,r.value??r.max]))};
+    const template=structuredClone(data);
+    for(const key of VIEW_FIELDS)template[key]=structuredClone(shared[key]);
+    for(const r of template.resources)if(!r.itemId){const original=shared.resources.find(old=>old.id===r.id);r.value=Math.min(Number(r.max),Number(original?.value??r.value??r.max));}
+    if(!same(shared,template))await owner.setFlag(ID,'layout',template);
+    if(!same(ctx.token.getFlag(ID,'barState'),state))await ctx.token.setFlag(ID,'barState',state);
+    return data;
   });
+}
+
+export async function setCustomBar(ctx,enabled){
+  if(!canOverrideBar(ctx)||!ctx.actor.isOwner)return;
+  const owner=layoutDocument(ctx);
+  return serial(owner.uuid,async()=>{
+    if(layout(ctx).locked)throw Error('Enter Build mode to change the bar source.');
+    const current=layout(ctx),updates={[`flags.${ID}.customBar`]:enabled};
+    if(enabled){
+      const saved=ctx.token.getFlag(ID,'layout'),copy=saved?normalizeLayout(saved):layout(ctx);copy.locked=false;
+      for(const [index,r] of copy.resources.entries())if(!r.itemId){const match=matchCounter(current.resources,r,index);if(match)r.value=match.value;}
+      updates[`flags.${ID}.layout`]=copy;
+      if(!ctx.token.getFlag(ID,'characterSections'))updates[`flags.${ID}.characterSections`]=structuredClone(owner.getFlag(ID,'characterSections')??{});
+    }else{
+      const base=representedActor(ctx),state=ctx.token.getFlag(ID,'barState');
+      const resources={...(state?.source===base.uuid?state.resources:{})};
+      for(const [index,r] of counterIds(normalizeLayout(base.getFlag(ID,'layout'))).resources.entries())if(!r.itemId){const match=matchCounter(current.resources,r,index);if(match)resources[r.id]=match.value;}
+      updates[`flags.${ID}.barState`]={...(state?.source===base.uuid?structuredClone(state):{}),source:base.uuid,view:{...(state?.source===base.uuid?state.view:{}),locked:false},resources};
+    }
+    await ctx.token.update(updates);
+  });
+}
+
+export async function initializeSharedBars(){
+  if(!game.user?.isGM||game.users?.activeGM?.id!==game.user.id)return;
+  // Seed an unused template once from a legacy token bar, keeping each legacy
+  // layout intact as that token's saved custom bar.
+  for(const scene of game.scenes??[])for(const token of scene.tokens??[]){
+    if(token.actorLink||token.getFlag(ID,'customBar')!==undefined)continue;
+    const saved=token.getFlag(ID,'layout');if(!saved)continue;
+    const base=token.baseActor??game.actors?.get(token.actorId);if(!base)continue;
+    if(!base.getFlag(ID,'layout')){
+      const updates={[`flags.${ID}.layout`]:structuredClone(saved)};
+      const existing=base.getFlag(ID,'characterSections'),legacy=token.getFlag(ID,'characterSections')??{};
+      updates[`flags.${ID}.characterSections`]=existing?{...structuredClone(existing),custom:normalizeSections([...(existing.custom??[]),...(legacy.custom??[])])}:structuredClone(legacy);
+      await base.update(updates);
+    }
+    const template=counterIds(normalizeLayout(base.getFlag(ID,'layout'))),old=normalizeLayout(saved);
+    const resources=Object.fromEntries(template.resources.filter(r=>!r.itemId).map(r=>{
+      const match=matchCounter(old.resources,r,template.resources.indexOf(r));
+      return [r.id,match?.value??r.value??r.max];
+    }));
+    const state=token.getFlag(ID,'barState');
+    await token.update({[`flags.${ID}.customBar`]:false,[`flags.${ID}.barState`]:state?.source===base.uuid?state:{source:base.uuid,view:Object.fromEntries(VIEW_FIELDS.map(k=>[k,structuredClone(old[k])])),resources}});
+  }
 }
 export async function serial(key, action) {
   const previous = queues.get(key) ?? Promise.resolve();

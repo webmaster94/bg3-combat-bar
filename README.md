@@ -10,7 +10,7 @@ In Foundry's **Install Module** dialog, paste this manifest URL:
 https://github.com/webmaster94/bg3-combat-bar/releases/latest/download/module.json
 ```
 
-Extract `bg3-combat-bar-0.1.18.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
+Extract `bg3-combat-bar-0.1.19.zip` into your Foundry `Data/modules` directory, then enable **BG3 Combat Bar** in Module Management. On Forge, use **My Foundry → Summon Import Wizard** to import the ZIP, then enable it in the world.
 
 The bar appears during combat for the selected owned PC or NPC. If nothing is selected, it follows the owned current combatant or the user's assigned character. The GM-controlled world setting **Show outside combat** allows everyone to prepare their bars before combat. **Bar scale** remains a personal client setting. Both settings apply when saved without a browser reload; changing scale updates the existing bar in place.
 
@@ -18,7 +18,7 @@ For Foundry v13, use D&D5e **5.3.3**, the latest system release supported by v13
 
 ## Controls
 
-- Enter Build mode to select slots. Right-click a slot and choose **Assign Item…** to fill or replace it from the actor's matching items, or drop a sheet item onto it. Items belonging to another actor are rejected. Weapon slots keep their direct click/right-click picker in Build mode.
+- Enter Build mode to select slots. Right-click a slot and choose **Assign Item…** to fill or replace it from the actor's matching items, or drop a sheet item onto it. Items from the represented actor's sheet are mapped to the selected creature's own copy; unrelated actors' items are rejected. Weapon slots keep their direct click/right-click picker in Build mode.
 - In Play mode, left-click an assigned item, spell, or feature to use it through D&D's activity workflow. Left-click an empty slot to assign, or right-click any slot to assign, replace, or clear it. Build mode provides multi-selection and the editing menu. Alt-click has no separate slot-assignment behavior.
 - The weapon tabs select melee or ranged loadouts. Each has two numbered loadouts with a main-hand and off-hand slot. Assigning a weapon or selecting a numbered loadout equips that loadout and unequips weapons managed by the other loadouts. Off-hand slots also accept shields.
 - Drag assigned icons to exchange slots. Drag section headings to reorder features, spells, and items within their shared frame. Drag the colored right border of a feature, spell, or item section to adjust its visible width smoothly. The next expanded section gives or receives space where possible; collapsed neighbors remain collapsed. Slots retain their positions; narrowing the window clips them, including partial slots, without scrolling or wrapping. Widen the section to reveal them again. Sections can now shrink completely to narrow rails, with their titles running vertically inside. Rails sit below the title row. The rail has one contextual control: expanded or partially open sections show a left arrow (double-click to collapse), while fully collapsed sections show a right arrow in the same position (click to expand all twelve columns). These controls work in both Build and Play. Features collapse leaves the fixed Actions icons visible. Collapsing preserves every assignment and group, across all pages. Escape cancels a resize. The focused border also accepts Left/Right arrows and Home/End. Drag the diamond above the portrait to move the whole bar.
@@ -32,7 +32,13 @@ For Foundry v13, use D&D5e **5.3.3**, the latest system release supported by v13
 - Click a class-point resource to use its feature through the system, and right-click to open the feature sheet. Uses, scale formulas, and rest recovery stay owned by the original feature. A manually tracked copy of the same feature is hidden from the lower strip to avoid duplicate counters. Older sheets with labeled Focus Points, Ki Points, or Sorcery Points actor resources are also supported; click those to spend one point, and right-click to restore one.
 - End turn is enabled only on this token's turn. Rest opens the system's short- or long-rest workflow.
 
-Assignments live in `flags.bg3-combat-bar.layout` on a linked actor, or on the TokenDocument for an unlinked token. Limited uses and spell slots come from the D&D system. Action counters refresh at the actor's own turn.
+Assignments live in `flags.bg3-combat-bar.layout` on the represented Actor by default, including for unlinked tokens. All creatures represented by that Actor share slot assignments, sections, groups, widths, and loadout definitions across scenes. A custom override stores its layout on that TokenDocument instead.
+
+For an unlinked creature, enter Build mode and click **Customize This Token** under Preferences. It creates a private copy of the shared bar, or restores that token's previously saved custom bar. **Use Shared Bar** returns to the actor's shared layout while retaining the custom layout for later. The Shared/Custom label shows which bar you are editing.
+
+Health, item uses, spell slots, and action economy remain on each creature. Unlinked creatures also keep their own current page, Build/Play mode, weapon selection, and custom-counter values. Equipping or using an item never operates on the template Actor. Shared layout edits do not consume another creature's resources.
+
+On the active GM's first load after upgrading, a represented Actor with no saved bar is seeded from the first existing unlinked-token bar found in scene order. Other existing token bars are preserved as saved custom bars; migration never overwrites an already configured actor bar. Linked actors continue using their actor bar as before.
 
 The Spells section appears only when the character has spellcasting classes, spell-slot capacity, spell items (including cantrips), or item/feature Cast activities linked to spells. Spent slots, unprepared spells, and depleted item charges do not hide it. Characters without any of these omit the section in both modes; its saved assignments, groups, and width are preserved for later. Visibility follows character and item changes without reloading.
 
@@ -93,11 +99,11 @@ In **Game Settings → BG3 Combat Bar**, open **Global Default Sections** as GM 
 
 New sections accept features, spells, weapons, and inventory items together. Use the usual slot picker or drag and drop. They support the same ten pages, row controls, Build/Play modes, section rearrangement, and smooth divider resizing as the built-in sections. Hidden sections retain their assigned items and widths.
 
-Shared definitions are world settings; personal definitions and visibility overrides are saved on the Foundry user. Character definitions and visibility overrides use `flags.bg3-combat-bar.characterSections` on the linked actor or unlinked token. Slot assignments and named groups remain in its layout flag, with distinct section IDs so players' personal sections do not overwrite one another. Layout version 3 preserves existing pages and loadouts during migration.
+Shared definitions are world settings; personal definitions and visibility overrides are saved on the Foundry user. Character definitions and visibility overrides use `flags.bg3-combat-bar.characterSections` on the represented actor, or on an unlinked token with a custom override. Slot assignments and named groups remain in the same layout owner's layout flag, with distinct section IDs so players' personal sections do not overwrite one another. Layout version 3 preserves existing pages and loadouts during migration.
 
 ## Character preferences and slot groups
 
-Enter Build mode and click the cog under **Preferences**, beside **Rows +**. Add character sections here, or hide global sections for this character. These preferences belong to the linked actor or the individual unlinked token. Existing settings-menu sections remain global. Saving applies immediately without reloading.
+Enter Build mode and click the cog under **Preferences**, beside **Rows +**. Add character sections here, or hide global sections for this character. These preferences belong to the represented actor by default. An unlinked token with a custom bar has its own preferences. Existing settings-menu sections remain global. Saving applies immediately without reloading.
 
 Build mode immediately enables slot selection; opening or saving Preferences is not required. Assignable slots have red outlines; click to select them in green. Right-click a selected slot for **Assign Item…**, **Group**, **Ungroup**, **Send To…**, **Remove**, or **Clear Selection**. **Enter Play Mode** returns to normal item use. The mode button at the bottom switches between Play and Build; Preferences contains only its settings cog.
 

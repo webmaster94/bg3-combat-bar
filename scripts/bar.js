@@ -1,8 +1,9 @@
+import {canOverrideBar,hasCustomBar,droppedItem} from './layout-storage.js';
 import {TokenControls,tokenName,renameFromBar} from './token-controls.js';
 import {BarEditor} from './editor.js';
 import {itemState} from './item-state.js';
 import {ID,SECTIONS,SECTION_COLUMNS,MAX_ROWS,MAX_SECTION_WIDTH,PAGE_COUNT,resizeSections,isCustomSection,GENERICS,escapeHTML as esc,matchesItem,usesBadge} from "./model.js";
-import {layout,editLayout,economy,actionCost,isTurn,equipLoadout,serial,setEconomy,changeSpellSlots} from "./state.js";
+import {layout,editLayout,economy,actionCost,isTurn,equipLoadout,serial,setEconomy,changeSpellSlots,setCustomBar} from "./state.js";
 import {classResources} from "./resources.js";
 import {sectionName,visibleSectionOrder,editSection,hideSection} from './sections.js';
 import {ActivityPopover,usableActivities,activityUses} from './activities.js';
@@ -41,12 +42,17 @@ export class CombatBar {
     root.style.setProperty("--rows",data.rows);root.style.setProperty("--offset-x",`${data.offset.x}px`);root.style.setProperty("--offset-y",`${data.offset.y}px`);
     root.innerHTML=`<div class="bg3-main"><div class="bg3-portrait-wrap"><div class="bg3-identity"><button class="bg3-drag-bar" data-command="move" aria-label="Drag Combat Bar" title="Drag Combat Bar">◆</button>${data.locked?`<span class="bg3-actor-name" title="${esc(displayName)}">${esc(displayName)}</span>`:`<input class="bg3-actor-name" data-token-name aria-label="Token Name" title="Edit Token Name" value="${esc(displayName)}" maxlength="128">`}</div><button class="bg3-portrait" data-command="sheet" title="Open Character Sheet" style="--hp:${frac*100}%;--damage:${(1-frac)*100}%"><img src="${esc(actor.img)}" alt="${esc(actor.name)}"><span class="bg3-health-fill"></span><span class="bg3-health">${hp.value??0}<small> / ${hp.max??0}</small></span>${hp.temp>0?`<span class="bg3-temp">+${hp.temp}</span>`:""}</button><button class="bg3-checks" data-command="checks" aria-label="Skills and Saving Throws" title="Skills and Saving Throws">${icon("d20")}</button>${this.tokenControls.buttons(ctx)}</div>
       ${this.weapons(ctx,data)}<div class="bg3-action-frame"><div class="bg3-resource-crown"><div class="bg3-resources" data-resource-drop>${this.resources(ctx,data)}</div></div><div class="bg3-sections">${visibleSectionOrder(data,ctx).map(section=>this.section(ctx,data,section)).join("")}</div>
-      <nav class="bg3-controls" aria-label="Bar controls"><div class="bg3-control-column"><small>Page</small><button data-command="next" aria-label="Next Page" title="Next Page">▴</button><span>${data.page+1}/${PAGE_COUNT}</span><button data-command="previous" aria-label="Previous Page" title="Previous Page">▾</button></div><div class="bg3-control-column"><small>Rows</small><button data-command="moreRows" aria-label="Add Row" title="Add Row" ${data.rows>=MAX_ROWS||data.locked?'disabled':''}>+</button><span>${data.rows}</span><button data-command="fewerRows" aria-label="Remove Row" title="Remove Row" ${data.rows<=2||data.locked?'disabled':''}>−</button></div>${data.locked?'':`<div class="bg3-preferences"><small>Preferences</small><button data-command="preferences" aria-label="Character Preferences" title="Character Preferences"><i class="fa-solid fa-gear"></i></button></div>`}<div class="bg3-control-bottom"><button class="bg3-mode-toggle" data-command="toggleMode" aria-label="${data.locked?"Switch to Build Mode":"Switch to Play Mode"}" title="${data.locked?"Switch to Build Mode":"Switch to Play Mode"}">${icon(data.locked?"build":"play")}</button><button data-command="macros" title="Show Foundry Macro Bar" aria-label="Show Foundry Macro Bar">▦</button></div></nav></div>
+      <nav class="bg3-controls" aria-label="Bar controls"><div class="bg3-control-column"><small>Page</small><button data-command="next" aria-label="Next Page" title="Next Page">▴</button><span>${data.page+1}/${PAGE_COUNT}</span><button data-command="previous" aria-label="Previous Page" title="Previous Page">▾</button></div><div class="bg3-control-column"><small>Rows</small><button data-command="moreRows" aria-label="Add Row" title="Add Row" ${data.rows>=MAX_ROWS||data.locked?'disabled':''}>+</button><span>${data.rows}</span><button data-command="fewerRows" aria-label="Remove Row" title="Remove Row" ${data.rows<=2||data.locked?'disabled':''}>−</button></div>${data.locked?'':`<div class="bg3-preferences"><small>Preferences</small><button data-command="preferences" aria-label="Character Preferences" title="Character Preferences"><i class="fa-solid fa-gear"></i></button>${this.barSourceControl(ctx)}</div>`}<div class="bg3-control-bottom"><button class="bg3-mode-toggle" data-command="toggleMode" aria-label="${data.locked?"Switch to Build Mode":"Switch to Play Mode"}" title="${data.locked?"Switch to Build Mode":"Switch to Play Mode"}">${icon(data.locked?"build":"play")}</button><button data-command="macros" title="Show Foundry Macro Bar" aria-label="Show Foundry Macro Bar">▦</button></div></nav></div>
       <button class="bg3-end-turn ${isTurn(ctx)?"is-turn":""}" data-command="endTurn" ${isTurn(ctx)?"":"disabled"} aria-label="End Turn">${icon("hourglass")}<small>End Turn</small></button><button class="bg3-rest" data-command="rest" title="Short or Long Rest" aria-label="Rest">${icon("rest")}</button></div>`;
     document.body.append(root);this.paintResources();this.applyScale();this.bind(ctx,data);
     root.querySelectorAll('[data-section]').forEach(section=>this.editor.decorate(ctx,data,section));this.editor.paint();this.paintResources();this.applyScale();
     if(focusedName&&focusedName.token===ctx.token?.uuid&&!data.locked){const input=root.querySelector('[data-token-name]');if(input){input.value=focusedName.value;input.focus();input.setSelectionRange(focusedName.start,focusedName.end);}}
     this.effectsDock=new EffectsDock(this,ctx);this.effectsDock.render().catch(error=>console.error(`${ID} | effects`,error));
+  }
+  barSourceControl(ctx){
+    if(!canOverrideBar(ctx)||layout(ctx).locked)return '';
+    const custom=hasCustomBar(ctx),saved=!!ctx.token.getFlag(ID,'layout');
+    return `<button data-command="customBar" aria-label="${custom?'Use Shared Bar':'Customize This Token'}" title="${custom?'Use Shared Bar':saved?'Restore Saved Custom Bar':'Customize This Token'}" aria-pressed="${custom}"><i class="fa-solid ${custom?'fa-link':'fa-code-branch'}" inert></i></button><small class="bg3-bar-source">${custom?'Custom':'Shared'}</small>`;
   }
   resources(ctx,data){
     const e=economy(ctx),spells=ctx.actor.system.spells??{},pools=classResources(ctx.actor),hasSpellSlots=Object.values(spells).some(s=>Number(s.max)>0);
@@ -71,7 +77,7 @@ export class CombatBar {
   }
   weapons(ctx,data){
     const type=data.weaponTab,index=data.weaponSet[type];
-    return `<section class="bg3-section bg3-weapons" data-section="weapons"><header><span>Weapons</span></header><div class="bg3-weapon-tabs"><button data-weapon-type="melee" class="${type==='melee'?'active':''}" title="Melee Loadouts">${icon('swords')}</button><button data-weapon-type="ranged" class="${type==='ranged'?'active':''}" title="Ranged Loadouts">${icon('bow')}</button></div><div class="bg3-weapon-slots">${data.weapons[type][index].map((id,hand)=>this.slot(ctx,id,{section:type,index:hand,loadout:index,weapon:true,hand,locked:data.locked})).join('')}</div><div class="bg3-loadouts">${[0,1].map(i=>`<button data-loadout="${i}" class="${index===i?'active':''}" title="Equip ${type} loadout ${i+1}">${i+1===1?'I':'II'}</button>`).join('')}<small>${data.activeLoadout?.type===type&&data.activeLoadout?.index===index?'Equipped':'Stored'}</small></div></section>`;
+    return `<section class="bg3-section bg3-weapons" data-section="weapons"><header><span>Weapons</span></header><div class="bg3-weapon-tabs"><button data-weapon-type="melee" class="${type==='melee'?'active':''}" title="Melee Loadouts">${icon('swords')}</button><button data-weapon-type="ranged" class="${type==='ranged'?'active':''}" title="Ranged Loadouts">${icon('bow')}</button></div><div class="bg3-weapon-slots">${data.weapons[type][index].map((id,hand)=>this.slot(ctx,id,{section:type,index:hand,loadout:index,weapon:true,hand,locked:data.locked})).join('')}</div><div class="bg3-loadouts">${[0,1].map(i=>`<button data-loadout="${i}" class="${index===i?'active':''}" title="Equip ${type} loadout ${i+1}">${i+1===1?'I':'II'}</button>`).join('')}<small>${data.weapons[type][index].some(Boolean)&&data.weapons[type][index].filter(Boolean).every(id=>ctx.actor.items.get(id)?.system.equipped)?'Equipped':'Stored'}</small></div></section>`;
   }
   section(ctx,data,section){
     const width=data.widths[section],slots=data.pages[data.page][section];
@@ -99,7 +105,7 @@ export class CombatBar {
       b.ondragstart=e=>this.editor.startDrag(ctx,b,e);
       b.ondragover=e=>{e.preventDefault();b.classList.add('drop-target');};
       b.ondragleave=()=>b.classList.remove('drop-target');
-      b.ondrop=run(async e=>{e.preventDefault();e.stopPropagation();b.classList.remove('drop-target');if(await this.editor.drop(ctx,b,e))return;let drop;try{drop=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}if(drop.type!=='Item')return;const item=await fromUuid(drop.uuid);if(item?.actor?.uuid!==ctx.actor.uuid)throw new Error("Drag an item from this character's sheet.");await this.assignItem(ctx,b,item.id,drop.bg3);});
+      b.ondrop=run(async e=>{e.preventDefault();e.stopPropagation();b.classList.remove('drop-target');if(await this.editor.drop(ctx,b,e))return;let drop;try{drop=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}if(drop.type!=='Item')return;const item=droppedItem(ctx,await fromUuid(drop.uuid));if(!item)throw new Error("Drag an item from this character's sheet.");await this.assignItem(ctx,b,item.id,drop.bg3);});
     });
     root.querySelectorAll('[data-weapon-type]').forEach(b=>b.onclick=run(()=>editLayout(ctx,d=>{d.weaponTab=b.dataset.weaponType;})));
     root.querySelectorAll('[data-loadout]').forEach(b=>b.onclick=run(()=>editLayout(ctx,d=>equipLoadout(ctx,d,d.weaponTab,Number(b.dataset.loadout)))));
@@ -117,7 +123,7 @@ export class CombatBar {
       b.oncontextmenu=run(e=>{e.preventDefault();return item?item.sheet.render(true):this.changeClassResource(ctx,pool,1);});
     });
     root.querySelectorAll('[data-custom]').forEach(b=>{const item=ctx.actor.items.get(data.resources[Number(b.dataset.custom)].itemId);if(item)this.hover(b,()=>this.itemTooltip(ctx,item,true));b.onclick=run(e=>this.useResource(ctx,Number(b.dataset.custom),e));b.oncontextmenu=run(e=>{e.preventDefault();return this.configureResource(ctx,Number(b.dataset.custom));});});
-    const resources=root.querySelector('[data-resource-drop]');resources.ondragover=e=>{e.preventDefault();};resources.ondrop=run(async e=>{e.preventDefault();let drop;try{drop=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}const item=drop.uuid?await fromUuid(drop.uuid):null;if(item?.actor?.uuid!==ctx.actor.uuid||!usesBadge(item))throw new Error("Drop a feature, spell, or item with its own limited uses from this character.");await editLayout(ctx,d=>{if(!d.resources.some(r=>r.itemId===item.id))d.resources.push({itemId:item.id});});});
+    const resources=root.querySelector('[data-resource-drop]');resources.ondragover=e=>{e.preventDefault();};resources.ondrop=run(async e=>{e.preventDefault();let drop;try{drop=JSON.parse(e.dataTransfer.getData('text/plain'));}catch{return;}const item=drop.uuid?droppedItem(ctx,await fromUuid(drop.uuid)):null;if(!item||!usesBadge(item))throw new Error("Drop a feature, spell, or item with its own limited uses from this character.");await editLayout(ctx,d=>{if(!d.resources.some(r=>r.itemId===item.id))d.resources.push({itemId:item.id});});});
     const grip=root.querySelector('[data-command="move"]');grip.onpointerdown=e=>{
       if(e.button!==0)return;e.preventDefault();this.activities.close();grip.setPointerCapture(e.pointerId);const start={x:e.clientX,y:e.clientY};let offset={...data.offset};
       grip.onpointermove=ev=>{offset={x:Math.max(-innerWidth/2+100,Math.min(innerWidth/2-100,data.offset.x+ev.clientX-start.x)),y:Math.max(-innerHeight+220,Math.min(0,data.offset.y+ev.clientY-start.y))};root.style.setProperty('--offset-x',`${offset.x}px`);root.style.setProperty('--offset-y',`${offset.y}px`);};
@@ -187,6 +193,7 @@ export class CombatBar {
     return serial(`${ctx.token.uuid}:barUse`,async()=>{this.usingActor=ctx.actor.uuid;try{return await activity.use({event});}finally{this.usingActor=null;}});
   }
   async command(command,ctx,data,event){
+    if(command==='customBar'){if(layout(ctx).locked)return;await setCustomBar(ctx,!hasCustomBar(ctx));this.editor.reset();return this.schedule();}
     if(command==='preferences')return this.editor.preferences(ctx);
     if(command==='finishEditing')return this.editor.finish(ctx);
     if(command==='sheet')return ctx.actor.sheet.render(true);

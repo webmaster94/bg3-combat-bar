@@ -1,3 +1,13 @@
+## 0.1.19 shared bars for unlinked creatures, October 10, 2026
+
+Unlinked tokens now read and edit a layout on their represented Actor by default. Build mode exposes Customize This Token / Use Shared Bar with a Shared/Custom indicator. A custom bar stores an independent token snapshot, including section preferences; returning to shared retains the saved override. Legacy token bars seed only an empty actor template and remain available as overrides.
+
+The shared layout is separate from the runtime TokenDocument. Actions, spell slots, HP, native item uses and equipment, page/mode selection, and custom-counter values stay per creature. Runtime-only edits avoid writing the shared template. Counter IDs preserve identity through shared definition edits. Dropping a represented-Actor item resolves to the selected token's own item copy.
+
+**99 tests pass**, including twelve new regressions for cross-scene sharing, override isolation and restoration, shared section visibility, action/HP/slot/custom-counter isolation, distinct same-named counters, independent equipment, concurrent shared edits, non-destructive and idempotent legacy migration, Build-only controls, pending source changes, and disabled action enforcement. Existing movement refresh regressions pass. The older reaction test fixture now supplies the settings getter required by the previously added enforcement setting.
+
+Syntax and whitespace checks pass. No live-world migration or Forge deployment was performed for this change; regression tests exercise the actual state and bar-control code with document storage doubles.
+
 ## 0.1.18 contextual section control, September 28, 2026
 
 Collapse and Expand now share one 14px-high control area. Expanded and partially open sections show only Collapse; zero-width sections show only Expand. The same collapsed class drives the control during divider dragging and after saved layout updates. Existing click behavior is retained.

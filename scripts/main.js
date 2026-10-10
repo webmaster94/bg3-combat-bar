@@ -1,6 +1,6 @@
 import {registerSightPreference} from './token-controls.js';
 import {ID,turnKey} from "./model.js";
-import {context,layout,editLayout,consume,canSpend,economy,isTurn,midiReactions} from "./state.js";
+import {context,layout,editLayout,consume,canSpend,economy,isTurn,midiReactions,initializeSharedBars} from "./state.js";
 import {CombatBar} from "./bar.js";
 import {registerRequests,cleanupEffects,clearHidden} from "./actions.js";
 import {registerSectionSettings} from './sections.js';
@@ -52,10 +52,12 @@ Hooks.once('init',()=>{
   game.keybindings.register(ID,'toggleMacroBar',{name:'Swap combat and macro bars',editable:[{key:'KeyB',modifiers:['Shift']}],onDown:()=>{if(!bar?.visible())return false;bar.macroMode=!bar.macroMode;bar.render();return true;}});
 });
 Hooks.once('setup',()=>registerSightPreference());
-Hooks.once('ready',()=>{
+Hooks.once('ready',async()=>{
   if(game.system.id!=='dnd5e')return;
   bar=new CombatBar();game.modules.get(ID).api={bar,refresh,context,layout,economy};
-  registerRequests();refresh();
+  registerRequests();
+  try{await initializeSharedBars();}catch(error){console.error(`${ID} | shared bar migration`,error);ui.notifications.warn('Some saved bars could not be migrated. Their token layouts were kept.');}
+  refresh();
 });
 Hooks.on('canvasReady',refresh);
 Hooks.on('controlToken',(token,controlled)=>syncContext(undefined,controlled?context(token.document):undefined));

@@ -1,3 +1,4 @@
+import {layoutDocument} from './layout-storage.js';
 import {SECTION_COLUMNS as C,escapeHTML as esc,matchesItem} from './model.js';
 import {layout,editLayout} from './state.js';
 import {choose,confirm} from './dialogs.js';
@@ -8,7 +9,7 @@ export class BarEditor{
   constructor(bar){this.bar=bar;this.active=false;this.selected=[];}
   reset(){this.active=false;this.selected=[];this.renameId=null;this.closeMenu();this.endDrag();}
   sync(ctx,data){
-    const key=`${ctx.document.uuid}:${data.page}`;
+    const key=`${ctx.document.uuid}:${layoutDocument(ctx).uuid}:${data.page}`;
     if(this.key!==key){this.selected=[];this.renameId=null;this.closeMenu();}this.key=key;
     this.active=!data.locked;
     if(data.locked){this.selected=[];this.renameId=null;}

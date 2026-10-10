@@ -1,3 +1,4 @@
+import {layoutDocument,usesSharedBar} from './layout-storage.js';
 import {ID,isCustomSection,escapeHTML as esc} from './model.js';
 
 export function normalizeSections(entries=[]){
@@ -11,7 +12,7 @@ export function combineSections(defaults,personal){
 }
 export function sectionDefinitions(ctx){
   const global=combineSections(globalThis.game?.settings?.get?.(ID,'defaultSections')??[],globalThis.game?.user?.getFlag?.(ID,'sections'));
-  const local=ctx?.document?.getFlag?.(ID,'characterSections')??{};
+  const local=layoutDocument(ctx)?.getFlag?.(ID,'characterSections')??{};
   const ids=new Set(global.map(s=>s.id));
   return [...global.map(s=>({...s,visible:s.visible&&!local.hiddenGlobal?.includes(s.id)})),...normalizeSections(local.custom).filter(s=>!ids.has(s.id)).map(s=>({...s,character:true}))];
 }
@@ -30,10 +31,10 @@ export function sectionName(id,ctx){return {features:'Features',spells:'Spells',
 export async function hideSection(id,ctx){
   const section=sectionDefinitions(ctx).find(s=>s.id===id);if(!section)return;
   if(ctx){
-    const local=foundry.utils.deepClone(ctx.document.getFlag(ID,'characterSections')??{});
+    const local=foundry.utils.deepClone(layoutDocument(ctx).getFlag(ID,'characterSections')??{});
     if(section.character)local.custom=normalizeSections(local.custom).map(s=>s.id===id?{...s,visible:false}:s);
     else local.hiddenGlobal=[...new Set([...(local.hiddenGlobal??[]),id])];
-    return ctx.document.setFlag(ID,'characterSections',local);
+    return layoutDocument(ctx).setFlag(ID,'characterSections',local);
   }
   const personal=foundry.utils.deepClone(game.user.getFlag(ID,'sections')??{});
   if(section.shared)personal.hiddenDefaults=[...new Set([...(personal.hiddenDefaults??[]),id])];
@@ -49,15 +50,15 @@ export function editSection(id,ctx){
 }
 
 export function characterPreferences(ctx,{focusSection}={}){
-  const local=ctx.document.getFlag(ID,'characterSections')??{},globals=sectionDefinitions();
+  const local=layoutDocument(ctx).getFlag(ID,'characterSections')??{},globals=sectionDefinitions();
   const row=s=>`<div class="bg3-section-setting" data-character-section="${s.id}"><input name="section-name" aria-label="Section Name" value="${esc(s.name)}" maxlength="40" required><label><input name="section-visible" type="checkbox" ${s.visible?'checked':''}>Show</label><button type="button" data-remove-section aria-label="Remove ${esc(s.name)}"><i class="fa-solid fa-trash" inert></i></button></div>`;
   const save=async button=>{
     if(!ctx.actor.isOwner)throw Error('You do not own this character.');
     const form=button.form;
-    await ctx.document.setFlag(ID,'characterSections',{custom:normalizeSections(Array.from(form.querySelectorAll('[data-character-section]'),el=>({id:el.dataset.characterSection,name:el.querySelector('[name="section-name"]').value,visible:el.querySelector('[name="section-visible"]').checked}))),hiddenGlobal:Array.from(form.querySelectorAll('[data-global-section]:not(:checked)'),el=>el.dataset.globalSection)});
+    await layoutDocument(ctx).setFlag(ID,'characterSections',{custom:normalizeSections(Array.from(form.querySelectorAll('[data-character-section]'),el=>({id:el.dataset.characterSection,name:el.querySelector('[name="section-name"]').value,visible:el.querySelector('[name="section-visible"]').checked}))),hiddenGlobal:Array.from(form.querySelectorAll('[data-global-section]:not(:checked)'),el=>el.dataset.globalSection)});
   };
   return foundry.applications.api.DialogV2.wait({window:{title:`Preferences · ${ctx.actor.name}`},classes:['bg3-app','bg3-section-manager'],position:{width:550},modal:true,rejectClose:false,
-    content:`<p>These sections belong to this character${ctx.token?.actorLink?'':' or unlinked token'}. Global sections in Configure Settings remain available to every character.</p>${globals.length?`<fieldset><legend>Global sections on this character</legend>${globals.map(s=>`<label class="bg3-shared-visibility"><input type="checkbox" data-global-section="${s.id}" ${!local.hiddenGlobal?.includes(s.id)?'checked':''}>${esc(s.name)}${!s.visible?' (hidden globally)':''}</label>`).join('')}</fieldset>`:''}<div data-character-sections>${normalizeSections(local.custom).map(row).join('')}</div><button type="button" data-add-character-section><i class="fa-solid fa-plus" inert></i> Add Character Section</button><hr><p><strong>Build mode selects slots:</strong> click red slots to select them in green, then right-click to assign an item, group, send to a page, or remove. Groups use rectangular blocks within a section. Drag an icon to move its group or selection. Drop outside the bar to remove assignments.</p>`,
+    content:`<p>${usesSharedBar(ctx)?'These sections belong to the represented actor and are shared by its creatures.':'These sections belong to this character or custom token bar.'} Global sections in Configure Settings remain available to every character.</p>${globals.length?`<fieldset><legend>Global sections on this character</legend>${globals.map(s=>`<label class="bg3-shared-visibility"><input type="checkbox" data-global-section="${s.id}" ${!local.hiddenGlobal?.includes(s.id)?'checked':''}>${esc(s.name)}${!s.visible?' (hidden globally)':''}</label>`).join('')}</fieldset>`:''}<div data-character-sections>${normalizeSections(local.custom).map(row).join('')}</div><button type="button" data-add-character-section><i class="fa-solid fa-plus" inert></i> Add Character Section</button><hr><p><strong>Build mode selects slots:</strong> click red slots to select them in green, then right-click to assign an item, group, send to a page, or remove. Groups use rectangular blocks within a section. Drag an icon to move its group or selection. Drop outside the bar to remove assignments.</p>`,
     buttons:[{action:'save',label:'Save Preferences',callback:(_e,b)=>save(b)},{action:'cancel',label:'Cancel'}],
     render:(_e,app)=>{
       const list=app.element.querySelector('[data-character-sections]');
