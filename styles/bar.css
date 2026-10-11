@@ -117,10 +117,10 @@ body.bg3-replaces-hotbar #hotbar {visibility:hidden!important;pointer-events:non
 .bg3-resource-crown:before{left:-3px}.bg3-resource-crown:after{right:-3px;transform:scaleX(-1)}
 
 /* Resource tiers share a measured outline, so the raised row has no bottom seam. */
-.bg3-resource-crown .bg3-resources{position:relative;isolation:isolate;overflow:visible;align-items:end;gap:5px;padding:13px 14px 7px;background:none;border:0;border-radius:0;box-shadow:none}
+.bg3-resource-crown .bg3-resources{position:relative;isolation:isolate;overflow:visible;align-items:center;gap:5px;padding:13px 14px 7px;background:none;border:0;border-radius:0;box-shadow:none}
 .bg3-resource-outline{position:absolute;z-index:-1;pointer-events:none;overflow:visible}
 .bg3-economy-resources,.bg3-spell-resources,.bg3-custom-resources,.bg3-class-resources{display:flex;flex-wrap:wrap;gap:2px;align-items:center;justify-content:center}
-.bg3-economy-resources{flex-shrink:0;align-self:end}
+.bg3-economy-resources{flex-shrink:0;align-self:center}
 .bg3-casting-resources{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
 .bg3-class-resources{gap:5px}
 .bg3-custom-resources{max-width:310px;justify-content:start}
